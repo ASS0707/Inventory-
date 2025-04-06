@@ -1,0 +1,127 @@
+Build a wholesale clothing inventory and operations management system as a responsive website using HTML, CSS, JavaScript, and PHP.
+
+System Type:
+	•	Internal business dashboard for a wholesale clothing brand.
+	•	RTL layout (Arabic language).
+	•	Dark Mode design.
+	•	Currency: Egyptian Pound (EGP).
+	•	Fully responsive website that works seamlessly on both desktop and mobile devices.
+
+⸻
+
+Pages & Features:
+
+⸻
+
+1. Dashboard Page:
+
+Split into 3 main sections:
+
+Section 1 – 5 Summary Boxes:
+	•	Total cash available.
+	•	Outstanding money from clients.
+	•	Money owed to suppliers.
+	•	Net profit after all dues.
+	•	Profit margin.
+
+Section 2 – Recent Operations Table:
+	•	Display the last 5 operations (sales/purchases/payments).
+	•	Button to view all operations with filters.
+
+Section 3 – Inventory Summary Table:
+	•	Shows product name, quantity, type, and color.
+
+Smart Alerts/Notifications:
+	•	Low stock alerts.
+	•	Due payments from clients/suppliers.
+	•	Payment deadlines.
+
+⸻
+
+2. Inventory Page:
+	•	Add new products with:
+	•	Name.
+	•	Color.
+	•	Material.
+	•	Quantity.
+	•	Type (Plain / Printed).
+	•	Finishing cost (Plain).
+	•	Finishing + printing cost (Printed).
+	•	If a product already exists: update it automatically instead of creating duplicates.
+	•	View all inventory in a clean, structured layout.
+
+⸻
+
+3. Clients Page:
+	•	Add new clients.
+	•	View client profiles with:
+	•	What they purchased.
+	•	How much they paid.
+	•	Remaining balance.
+	•	Full transaction history.
+	•	Payment due dates.
+	•	Search & filter by name or date.
+
+⸻
+
+4. Suppliers Page:
+
+Same features as the Clients Page:
+	•	Add/View suppliers.
+	•	Track purchases, payments, remaining amounts.
+	•	View transaction history and due dates.
+	•	Filter by name/date.
+
+⸻
+
+5. Operations & Invoices Page:
+	•	Create invoices for clients:
+	•	Add products, quantities, prices.
+	•	Mark payment (full/partial).
+	•	When a partial payment is made later:
+	•	Auto-deduct it from the remaining balance.
+	•	Editable invoices at any time.
+	•	View all financial operations:
+	•	Sales, purchases, returns, payments.
+	•	Filter by type, date, name.
+	•	Add returns that automatically update stock and balances.
+
+⸻
+
+6. Reports & Analytics Page:
+	•	View total profits, expenses over time (monthly/weekly).
+	•	Top-selling products.
+	•	Top clients.
+	•	Most active suppliers.
+	•	Profit & performance charts.
+
+⸻
+
+7. User Roles & Permissions:
+	•	Login system.
+	•	At least 2 roles:
+	•	Admin (full control).
+	•	Employee (limited access).
+
+⸻
+
+8. Export & Printing:
+	•	Export invoices and reports as PDF or Excel.
+	•	Simple printable layout for invoices and operations.
+
+⸻
+
+Extra Features:
+	•	Aging Report for outstanding payments (7 days / 30+ days).
+	•	Manual financial entry (e.g. loan, cash in/out not tied to invoices).
+	•	Bank account tracking (optional).
+	•	Search bar to search for clients, products, invoices across all system pages.
+	•	Login log (IP, date, failed login attempts).
+	•	Backup & Restore buttons (SQL file export/import).
+
+⸻
+
+UI Style:
+	•	Fully Arabic interface (Right-to-left).
+	•	Modern, dark mode.
+	•	Simple and intuitive UI for anyone on the team to use.
