@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+
+{% block title %}تقرير الأرباح - نظام إدارة مبيعات الملابس{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">التقارير</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">تقرير الأرباح</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="display-5 mb-4">
+                    <i class="fas fa-chart-line me-2"></i>تقرير الأرباح
+                </h1>
+                <div class="btn-group">
+                    <a href="{{ url_for('reports.export_excel', report_type='profit', date_from=date_from, date_to=date_to) }}" class="btn btn-success">
+                        <i class="fas fa-file-excel me-1"></i> تصدير Excel
+                    </a>
+                    <button type="button" class="btn btn-primary" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i> طباعة
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card border-0 shadow">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('reports.profit_report') }}" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="date_from" class="form-label">من تاريخ</label>
+                            <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="date_to" class="form-label">إلى تاريخ</label>
+                            <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to }}">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-filter me-1"></i> تطبيق الفلتر
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0">الأرباح الشهرية</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="profitChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0">المبيعات والمشتريات</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesPurchasesChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="row">
+        <div class="col">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0">بيانات الأرباح التفصيلية</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>الشهر</th>
+                                    <th>المبيعات</th>
+                                    <th>المشتريات</th>
+                                    <th>المرتجعات من العملاء</th>
+                                    <th>المرتجعات للموردين</th>
+                                    <th>صافي المبيعات</th>
+                                    <th>صافي المشتريات</th>
+                                    <th>الربح</th>
+                                    <th>نسبة الربح</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in profit_data %}
+                                <tr>
+                                    <td>{{ item.month }}</td>
+                                    <td>{{ item.sales|egp }}</td>
+                                    <td>{{ item.purchases|egp }}</td>
+                                    <td>{{ item.returns|egp }}</td>
+                                    <td>{{ item.supplier_returns|egp }}</td>
+                                    <td>{{ item.net_sales|egp }}</td>
+                                    <td>{{ item.net_purchases|egp }}</td>
+                                    <td class="{{ 'text-success' if item.profit > 0 else 'text-danger' }}">{{ item.profit|egp }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if item.profit_margin > 0 else 'danger' }}">
+                                            {{ item.profit_margin|round(2) }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="9" class="text-center py-3">لا توجد بيانات متاحة للفترة المحددة</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Profit Chart
+        const profitCtx = document.getElementById('profitChart').getContext('2d');
+        const profitChart = new Chart(profitCtx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_months|tojson }},
+                datasets: [{
+                    label: 'الأرباح',
+                    data: {{ chart_profits|tojson }},
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                family: 'Tajawal, sans-serif'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('ar-EG', { 
+                                        style: 'currency', 
+                                        currency: 'EGP' 
+                                    }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('ar-EG') + ' ج.م';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Sales & Purchases Chart
+        const salesPurchasesCtx = document.getElementById('salesPurchasesChart').getContext('2d');
+        const salesPurchasesChart = new Chart(salesPurchasesCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ chart_months|tojson }},
+                datasets: [
+                    {
+                        label: 'المبيعات',
+                        data: {{ chart_sales|tojson }},
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'المشتريات',
+                        data: {{ chart_purchases|tojson }},
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                family: 'Tajawal, sans-serif'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('ar-EG', { 
+                                        style: 'currency', 
+                                        currency: 'EGP' 
+                                    }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('ar-EG') + ' ج.م';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}كبار العملاء - نظام إدارة مبيعات الملابس{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">التقارير</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">كبار العملاء</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="display-5 mb-4">
+                    <i class="fas fa-users me-2"></i>كبار العملاء
+                </h1>
+                <div class="btn-group">
+                    <a href="{{ url_for('reports.export_excel', report_type='top_clients', date_from=date_from, date_to=date_to) }}" class="btn btn-success">
+                        <i class="fas fa-file-excel me-1"></i> تصدير Excel
+                    </a>
+                    <button type="button" class="btn btn-primary" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i> طباعة
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card border-0 shadow">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('reports.top_clients') }}" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="date_from" class="form-label">من تاريخ</label>
+                            <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="date_to" class="form-label">إلى تاريخ</label>
+                            <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to }}">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-filter me-1"></i> تطبيق الفلتر
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0">توزيع المبيعات حسب العملاء</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="topClientsChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="row">
+        <div class="col">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0">بيانات العملاء التفصيلية</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>الترتيب</th>
+                                    <th>اسم العميل</th>
+                                    <th>إجمالي المشتريات</th>
+                                    <th>النسبة من إجمالي المبيعات</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% set total_sum = clients|sum(attribute='total_amount') %}
+                                {% for client in clients %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ client.name }}</td>
+                                    <td>{{ client.total_amount|egp }}</td>
+                                    <td>
+                                        {{ ((client.total_amount / total_sum) * 100)|round(2) }}%
+                                        <div class="progress mt-1" style="height: 5px;">
+                                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ ((client.total_amount / total_sum) * 100)|round(2) }}%;" aria-valuenow="{{ ((client.total_amount / total_sum) * 100)|round(2) }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('clients.view', client_id=client.id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye me-1"></i> عرض العميل
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-3">لا توجد بيانات متاحة للفترة المحددة</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Top Clients Chart
+        const ctx = document.getElementById('topClientsChart').getContext('2d');
+        const topClientsChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ chart_labels|tojson }},
+                datasets: [{
+                    data: {{ chart_values|tojson }},
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)',
+                        'rgba(255, 159, 64, 0.7)',
+                        'rgba(199, 199, 199, 0.7)',
+                        'rgba(83, 102, 255, 0.7)',
+                        'rgba(40, 159, 64, 0.7)',
+                        'rgba(210, 99, 132, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(199, 199, 199, 1)',
+                        'rgba(83, 102, 255, 1)',
+                        'rgba(40, 159, 64, 1)',
+                        'rgba(210, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            font: {
+                                family: 'Tajawal, sans-serif'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.raw !== null) {
+                                    label += new Intl.NumberFormat('ar-EG', { 
+                                        style: 'currency', 
+                                        currency: 'EGP' 
+                                    }).format(context.raw);
+                                    
+                                    // Calculate percentage
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.raw / total) * 100).toFixed(2) + '%';
+                                    label += ' (' + percentage + ')';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

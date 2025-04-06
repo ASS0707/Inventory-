@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+
+{% block title %}فاتورة رقم {{ invoice.invoice_number }} - نظام إدارة مبيعات الملابس{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('operations.index') }}">العمليات والفواتير</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">فاتورة رقم {{ invoice.invoice_number }}</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="display-5 mb-4">
+                    <i class="fas fa-file-invoice-dollar me-2"></i>
+                    {% if invoice.type == 'sale' %}
+                        فاتورة مبيعات
+                    {% elif invoice.type == 'purchase' %}
+                        فاتورة مشتريات
+                    {% elif invoice.type == 'return' %}
+                        فاتورة مرتجع من عميل
+                    {% elif invoice.type == 'supplier_return' %}
+                        فاتورة مرتجع إلى مورد
+                    {% endif %}
+                </h1>
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('operations.edit_invoice', invoice_id=invoice.id) }}" class="btn btn-warning">
+                        <i class="fas fa-edit me-1"></i> تعديل الفاتورة
+                    </a>
+                    {% if invoice.status != 'paid' %}
+                    <a href="{{ url_for('operations.add_payment', invoice_id=invoice.id) }}" class="btn btn-success">
+                        <i class="fas fa-money-bill-wave me-1"></i> إضافة دفعة
+                    </a>
+                    {% endif %}
+                    <button type="button" class="btn btn-primary" onclick="printInvoice()">
+                        <i class="fas fa-print me-1"></i> طباعة
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="printSection">
+        <div class="row mb-4">
+            <!-- Invoice Details -->
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow h-100">
+                    <div class="card-header bg-dark">
+                        <h5 class="mb-0">تفاصيل الفاتورة</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">رقم الفاتورة</h6>
+                                <p class="fs-5">{{ invoice.invoice_number }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">تاريخ الفاتورة</h6>
+                                <p class="fs-5">{{ invoice.date|aradate }}</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">نوع الفاتورة</h6>
+                                <p class="fs-5">
+                                    {% if invoice.type == 'sale' %}
+                                        <span class="badge bg-success">مبيعات</span>
+                                    {% elif invoice.type == 'purchase' %}
+                                        <span class="badge bg-primary">مشتريات</span>
+                                    {% elif invoice.type == 'return' %}
+                                        <span class="badge bg-warning">مرتجع من عميل</span>
+                                    {% elif invoice.type == 'supplier_return' %}
+                                        <span class="badge bg-danger">مرتجع إلى مورد</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">تاريخ الاستحقاق</h6>
+                                <p class="fs-5">{{ invoice.due_date|aradate if invoice.due_date else '-' }}</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">حالة الدفع</h6>
+                                <p class="fs-5">
+                                    {% if invoice.status == 'paid' %}
+                                        <span class="badge bg-success">مدفوع</span>
+                                    {% elif invoice.status == 'partial' %}
+                                        <span class="badge bg-warning">مدفوع جزئي</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">غير مدفوع</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">المبلغ الإجمالي</h6>
+                                <p class="fs-5 fw-bold">{{ invoice.total_amount|egp }}</p>
+                            </div>
+                        </div>
+                        {% if invoice.notes %}
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="text-muted">ملاحظات</h6>
+                                <p>{{ invoice.notes }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Client/Supplier Details -->
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow h-100">
+                    <div class="card-header bg-dark">
+                        <h5 class="mb-0">
+                            {% if client %}
+                                بيانات العميل
+                            {% elif supplier %}
+                                بيانات المورد
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if client %}
+                        <div class="mb-3">
+                            <h3 class="mb-0">{{ client.name }}</h3>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">رقم الهاتف</h6>
+                                <p>{{ client.phone }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">البريد الإلكتروني</h6>
+                                <p>{{ client.email or '-' }}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="text-muted">العنوان</h6>
+                                <p>{{ client.address or '-' }}</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="text-center">
+                            <a href="{{ url_for('clients.view', client_id=client.id) }}" class="btn btn-outline-primary">
+                                <i class="fas fa-user me-1"></i> عرض بطاقة العميل
+                            </a>
+                        </div>
+                        {% elif supplier %}
+                        <div class="mb-3">
+                            <h3 class="mb-0">{{ supplier.name }}</h3>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">رقم الهاتف</h6>
+                                <p>{{ supplier.phone }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">البريد الإلكتروني</h6>
+                                <p>{{ supplier.email or '-' }}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="text-muted">العنوان</h6>
+                                <p>{{ supplier.address or '-' }}</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="text-center">
+                            <a href="{{ url_for('suppliers.view', supplier_id=supplier.id) }}" class="btn btn-outline-primary">
+                                <i class="fas fa-truck me-1"></i> عرض بطاقة المورد
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <!-- Invoice Items -->
+            <div class="col-12 mb-4">
+                <div class="card border-0 shadow">
+                    <div class="card-header bg-dark">
+                        <h5 class="mb-0">الأصناف</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>المنتج</th>
+                                        <th>الكمية</th>
+                                        <th>سعر الوحدة</th>
+                                        <th>الإجمالي</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items %}
+                                    <tr>
+                                        <td>{{ loop.index }}</td>
+                                        <td>{{ item.product.name }} ({{ item.product.color }})</td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>{{ item.unit_price|egp }}</td>
+                                        <td>{{ item.total_price|egp }}</td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center py-3">لا توجد أصناف في هذه الفاتورة</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="4" class="text-left">الإجمالي:</th>
+                                        <th>{{ invoice.total_amount|egp }}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment History -->
+            <div class="col-lg-12 mb-4">
+                <div class="card border-0 shadow">
+                    <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">سجل المدفوعات</h5>
+                        <div class="payment-summary text-white">
+                            <span class="me-3">المدفوع: <strong>{{ total_paid|egp }}</strong></span>
+                            <span>المتبقي: <strong>{{ remaining|egp }}</strong></span>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>التاريخ</th>
+                                        <th>المبلغ</th>
+                                        <th>طريقة الدفع</th>
+                                        <th>الرقم المرجعي</th>
+                                        <th>ملاحظات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for payment in payments %}
+                                    <tr>
+                                        <td>{{ loop.index }}</td>
+                                        <td>{{ payment.payment_date|aradate }}</td>
+                                        <td>{{ payment.amount|egp }}</td>
+                                        <td>
+                                            {% if payment.payment_method == 'cash' %}
+                                                <span class="badge bg-success">نقدي</span>
+                                            {% elif payment.payment_method == 'bank_transfer' %}
+                                                <span class="badge bg-primary">تحويل بنكي</span>
+                                            {% elif payment.payment_method == 'check' %}
+                                                <span class="badge bg-info">شيك</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">أخرى</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ payment.reference_number or '-' }}</td>
+                                        <td>{{ payment.notes or '-' }}</td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-3">لا توجد مدفوعات لهذه الفاتورة</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    function printInvoice() {
+        const printContents = document.getElementById('printSection').innerHTML;
+        const originalContents = document.body.innerHTML;
+        
+        // Add print styles
+        const printStyles = `
+            <style>
+                @media print {
+                    body { font-family: Arial, sans-serif; }
+                    .card { border: 1px solid #ddd !important; margin-bottom: 20px; }
+                    .card-header { background-color: #f8f9fa !important; border-bottom: 1px solid #ddd; padding: 10px 15px; }
+                    .card-body { padding: 15px; }
+                    .table { width: 100%; border-collapse: collapse; }
+                    .table th, .table td { border: 1px solid #ddd; padding: 8px; }
+                    .badge { padding: 5px 10px; border-radius: 4px; }
+                    .bg-success { background-color: #28a745 !important; color: white; }
+                    .bg-warning { background-color: #ffc107 !important; color: black; }
+                    .bg-danger { background-color: #dc3545 !important; color: white; }
+                    .bg-primary { background-color: #007bff !important; color: white; }
+                    .bg-secondary { background-color: #6c757d !important; color: white; }
+                    .bg-info { background-color: #17a2b8 !important; color: white; }
+                    .btn, .breadcrumb, .nav-tabs { display: none !important; }
+                }
+            </style>
+        `;
+        
+        // Create header with invoice information
+        const invoiceHeader = `
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h1>نظام إدارة مبيعات الملابس</h1>
+                <h2>فاتورة رقم: ${document.title.split(' - ')[0]}</h2>
+                <p>تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</p>
+            </div>
+        `;
+        
+        document.body.innerHTML = printStyles + invoiceHeader + printContents;
+        window.print();
+        document.body.innerHTML = originalContents;
+    }
+</script>
+{% endblock %}
+{% endblock %}

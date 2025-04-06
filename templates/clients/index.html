@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}العملاء - نظام إدارة مبيعات الملابس{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col d-flex justify-content-between align-items-center">
+            <h1 class="display-5"><i class="fas fa-users me-2"></i>العملاء</h1>
+            <a href="{{ url_for('clients.add') }}" class="btn btn-primary">
+                <i class="fas fa-user-plus me-1"></i> إضافة عميل جديد
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card border-0 shadow">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('clients.index') }}" class="row g-3">
+                        <div class="col-md-10">
+                            <label for="name" class="form-label">اسم العميل</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ request.args.get('name', '') }}">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search me-1"></i> بحث
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clients Table -->
+    <div class="row">
+        <div class="col">
+            <div class="card border-0 shadow">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>اسم العميل</th>
+                                    <th>رقم الهاتف</th>
+                                    <th>البريد الإلكتروني</th>
+                                    <th>العنوان</th>
+                                    <th>الرصيد</th>
+                                    <th>تاريخ التسجيل</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for client in clients.items %}
+                                <tr>
+                                    <td>{{ loop.index + ((clients.page - 1) * clients.per_page) }}</td>
+                                    <td>
+                                        <a href="{{ url_for('clients.view', client_id=client.id) }}">
+                                            {{ client.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ client.phone }}</td>
+                                    <td>{{ client.email or '-' }}</td>
+                                    <td>{{ client.address or '-' }}</td>
+                                    <td>
+                                        {% set balance = client.calculate_balance() %}
+                                        <span class="badge bg-{{ 'success' if balance <= 0 else 'danger' }}">
+                                            {{ balance|egp }}
+                                        </span>
+                                    </td>
+                                    <td>{{ client.created_at|aradate }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ url_for('clients.view', client_id=client.id) }}" class="btn btn-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('clients.edit', client_id=client.id) }}" class="btn btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{{ url_for('clients.add_payment', client_id=client.id) }}" class="btn btn-success">
+                                                <i class="fas fa-money-bill-wave"></i>
+                                            </a>
+                                            <a href="{{ url_for('operations.create_invoice') }}?client_id={{ client.id }}&type=sale" class="btn btn-primary">
+                                                <i class="fas fa-file-invoice-dollar"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-3">لا يوجد عملاء مطابقون للبحث</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if clients.pages > 1 %}
+    <div class="row mt-3">
+        <div class="col d-flex justify-content-center">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    {% if clients.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('clients.index', page=clients.prev_num, name=request.args.get('name', '')) }}">
+                            السابق
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">السابق</a>
+                    </li>
+                    {% endif %}
+
+                    {% for page_num in clients.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                            {% if page_num == clients.page %}
+                            <li class="page-item active" aria-current="page">
+                                <a class="page-link" href="#">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('clients.index', page=page_num, name=request.args.get('name', '')) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#">...</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if clients.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('clients.index', page=clients.next_num, name=request.args.get('name', '')) }}">
+                            التالي
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">التالي</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

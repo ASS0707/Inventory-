@@ -1,0 +1,71 @@
+/* Dark Mode Stylesheet */
+
+body.dark-mode {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+/* Cards */
+.dark-mode .card {
+    background-color: #1e1e1e;
+    border-color: #333;
+}
+
+.dark-mode .card-header {
+    background-color: #252525;
+    color: #e0e0e0;
+    border-bottom-color: #333;
+}
+
+/* Tables */
+.dark-mode .table {
+    color: #e0e0e0;
+}
+
+.dark-mode .table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .table thead th {
+    border-bottom-color: #333;
+    color: #8e8e8e;
+}
+
+.dark-mode .table td,
+.dark-mode .table th {
+    border-top-color: #333;
+}
+
+/* Forms */
+.dark-mode .form-control {
+    background-color: #2d2d2d;
+    border-color: #3a3a3a;
+    color: #e0e0e0;
+}
+
+.dark-mode .form-control:focus {
+    background-color: #2d2d2d;
+    border-color: #5e72e4;
+    color: #e0e0e0;
+}
+
+.dark-mode .form-control:disabled,
+.dark-mode .form-control[readonly] {
+    background-color: #252525;
+}
+
+.dark-mode .form-select {
+    background-color: #2d2d2d;
+    border-color: #3a3a3a;
+    color: #e0e0e0;
+}
+
+.dark-mode .form-select:focus {
+    border-color: #5e72e4;
+}
+
+.dark-mode .input-group-text {
+    background-color: #252525;
+    border-color: #3a3a3a;
+    color: #e0e0e0;
+}

@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}إضافة دفعة جديدة - {{ supplier.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('suppliers.index') }}">الموردين</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('suppliers.view', supplier_id=supplier.id) }}">{{ supplier.name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">إضافة دفعة</li>
+                </ol>
+            </nav>
+            <h1 class="display-5 mb-4"><i class="fas fa-money-bill-wave me-2"></i>إضافة دفعة جديدة</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0">دفعة للمورد: {{ supplier.name }}</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('suppliers.add_payment', supplier_id=supplier.id) }}">
+                        {{ form.hidden_tag() }}
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="invoice_id" class="form-label">الفاتورة</label>
+                                {{ form.invoice_id(class="form-select" + (" is-invalid" if form.invoice_id.errors else "")) }}
+                                {% if form.invoice_id.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.invoice_id.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="amount" class="form-label">المبلغ <span class="text-danger">*</span></label>
+                                {{ form.amount(class="form-control" + (" is-invalid" if form.amount.errors else ""), placeholder="أدخل المبلغ") }}
+                                {% if form.amount.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.amount.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="payment_date" class="form-label">تاريخ الدفع <span class="text-danger">*</span></label>
+                                {{ form.payment_date(class="form-control" + (" is-invalid" if form.payment_date.errors else ""), type="date") }}
+                                {% if form.payment_date.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.payment_date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="payment_method" class="form-label">طريقة الدفع <span class="text-danger">*</span></label>
+                                {{ form.payment_method(class="form-select" + (" is-invalid" if form.payment_method.errors else "")) }}
+                                {% if form.payment_method.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.payment_method.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="reference_number" class="form-label">الرقم المرجعي</label>
+                                {{ form.reference_number(class="form-control" + (" is-invalid" if form.reference_number.errors else ""), placeholder="رقم الشيك/التحويل") }}
+                                {% if form.reference_number.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.reference_number.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="notes" class="form-label">ملاحظات</label>
+                                {{ form.notes(class="form-control" + (" is-invalid" if form.notes.errors else ""), placeholder="ملاحظات إضافية") }}
+                                {% if form.notes.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.notes.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{{ url_for('suppliers.view', supplier_id=supplier.id) }}" class="btn btn-light me-md-2">إلغاء</a>
+                            {{ form.submit(class="btn btn-success") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

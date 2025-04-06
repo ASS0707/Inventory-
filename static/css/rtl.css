@@ -1,0 +1,72 @@
+/* RTL Support Stylesheet */
+
+/* Sidebar RTL Adjustments */
+.sidebar {
+    right: 0;
+    left: auto;
+}
+
+.sidebar-nav .nav-link i {
+    margin-left: 8px;
+    margin-right: 0;
+}
+
+/* Main Content RTL Adjustments */
+.main-content {
+    margin-left: 0;
+    margin-right: 250px;
+}
+
+@media (max-width: 991.98px) {
+    .sidebar {
+        margin-right: -250px;
+        margin-left: auto;
+    }
+    
+    .sidebar.active {
+        margin-right: 0;
+    }
+    
+    .main-content {
+        margin-right: 0;
+    }
+    
+    .main-content.active {
+        margin-right: 250px;
+        margin-left: 0;
+    }
+}
+
+/* Form RTL Adjustments */
+.form-select {
+    padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+    background-position: left 0.75rem center;
+}
+
+.form-check {
+    padding-right: 1.5em;
+    padding-left: 0;
+}
+
+.form-check .form-check-input {
+    float: right;
+    margin-right: -1.5em;
+    margin-left: 0;
+}
+
+/* Table RTL Adjustments */
+.table thead th {
+    text-align: right;
+}
+
+/* Breadcrumb RTL Adjustments */
+.breadcrumb-item + .breadcrumb-item {
+    padding-right: 0.5rem;
+    padding-left: 0;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    float: right;
+    padding-left: 0.5rem;
+    padding-right: 0;
+}

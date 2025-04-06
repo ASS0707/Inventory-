@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+
+{% block title %}لوحة التحكم - نظام إدارة مبيعات الملابس{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-5 mb-4"><i class="fas fa-chart-line me-2"></i>لوحة التحكم</h1>
+        </div>
+    </div>
+
+    <!-- Alerts Section -->
+    {% if alerts %}
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bell me-2"></i>التنبيهات
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for alert in alerts %}
+                        <div class="alert alert-{{ alert.type }}">
+                            {{ alert.message }}
+                            {% if alert.link %}
+                                <a href="{{ alert.link }}" class="alert-link">عرض التفاصيل</a>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Financial Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="bg-primary rounded-3 p-3 text-white">
+                                <i class="fas fa-coins fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="text-muted mb-1">النقد المتاح</h6>
+                            <h4 class="mb-0">{{ total_cash|egp }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="bg-success rounded-3 p-3 text-white">
+                                <i class="fas fa-hand-holding-dollar fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="text-muted mb-1">مستحقات من العملاء</h6>
+                            <h4 class="mb-0">{{ clients_outstanding|egp }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="bg-danger rounded-3 p-3 text-white">
+                                <i class="fas fa-file-invoice-dollar fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="text-muted mb-1">مستحقات للموردين</h6>
+                            <h4 class="mb-0">{{ suppliers_outstanding|egp }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="bg-info rounded-3 p-3 text-white">
+                                <i class="fas fa-chart-line fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="text-muted mb-1">صافي الربح</h6>
+                            <h4 class="mb-0">{{ net_profit|egp }}</h4>
+                            <span class="badge bg-{{ 'success' if profit_margin > 0 else 'danger' }}">
+                                <i class="fas fa-{{ 'arrow-up' if profit_margin > 0 else 'arrow-down' }}"></i>
+                                {{ profit_margin|round(2) }}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Operations & Inventory Summary -->
+    <div class="row">
+        <!-- Recent Operations -->
+        <div class="col-lg-7 mb-4">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>أحدث العمليات
+                    </h5>
+                    <a href="{{ url_for('operations.index') }}" class="btn btn-sm btn-primary">
+                        عرض الكل
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>نوع العملية</th>
+                                    <th>التاريخ</th>
+                                    <th>العميل/المورد</th>
+                                    <th>المبلغ</th>
+                                    <th>الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for operation in recent_operations %}
+                                <tr>
+                                    {% if operation.__class__.__name__ == 'Invoice' %}
+                                        <td>
+                                            {% if operation.type == 'sale' %}
+                                                <span class="badge bg-success">مبيعات</span>
+                                            {% elif operation.type == 'purchase' %}
+                                                <span class="badge bg-primary">مشتريات</span>
+                                            {% elif operation.type == 'return' %}
+                                                <span class="badge bg-warning">مرتجع من عميل</span>
+                                            {% elif operation.type == 'supplier_return' %}
+                                                <span class="badge bg-danger">مرتجع إلى مورد</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ operation.date|aradate }}</td>
+                                        <td>
+                                            {% if operation.client_id %}
+                                                {{ operation.client.name }}
+                                            {% elif operation.supplier_id %}
+                                                {{ operation.supplier.name }}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ operation.total_amount|egp }}</td>
+                                        <td>
+                                            {% if operation.status == 'paid' %}
+                                                <span class="badge bg-success">مدفوع</span>
+                                            {% elif operation.status == 'partial' %}
+                                                <span class="badge bg-warning">مدفوع جزئي</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">غير مدفوع</span>
+                                            {% endif %}
+                                        </td>
+                                    {% elif operation.__class__.__name__ == 'Payment' %}
+                                        <td>
+                                            <span class="badge bg-info">دفعة</span>
+                                        </td>
+                                        <td>{{ operation.payment_date|aradate }}</td>
+                                        <td>
+                                            {% if operation.client_id %}
+                                                {{ operation.client.name }}
+                                            {% elif operation.supplier_id %}
+                                                {{ operation.supplier.name }}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ operation.amount|egp }}</td>
+                                        <td>
+                                            <span class="badge bg-success">تم</span>
+                                        </td>
+                                    {% endif %}
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-3">لا توجد عمليات حديثة</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Summary -->
+        <div class="col-lg-5 mb-4">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-boxes me-2"></i>ملخص المخزون
+                    </h5>
+                    <a href="{{ url_for('inventory.index') }}" class="btn btn-sm btn-primary">
+                        عرض الكل
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>المنتج</th>
+                                    <th>اللون</th>
+                                    <th>النوع</th>
+                                    <th>الكمية</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in inventory_summary %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('inventory.view', product_id=product.id) }}">
+                                            {{ product.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ product.color }}</td>
+                                    <td>
+                                        {% if product.type == 'Plain' %}
+                                            <span class="badge bg-secondary">عادي</span>
+                                        {% else %}
+                                            <span class="badge bg-primary">مطبوع</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if product.quantity < 10 else 'success' }}">
+                                            {{ product.quantity }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-3">لا توجد منتجات في المخزون</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

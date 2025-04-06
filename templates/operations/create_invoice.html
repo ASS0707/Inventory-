@@ -1,0 +1,469 @@
+{% extends 'base.html' %}
+
+{% block title %}إنشاء فاتورة جديدة - نظام إدارة مبيعات الملابس{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('operations.index') }}">العمليات والفواتير</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">إنشاء فاتورة جديدة</li>
+                </ol>
+            </nav>
+            <h1 class="display-5 mb-4"><i class="fas fa-file-invoice-dollar me-2"></i>إنشاء فاتورة جديدة</h1>
+        </div>
+    </div>
+
+    <form id="invoiceForm" method="POST" action="{{ url_for('operations.create_invoice') }}">
+        {{ form.hidden_tag() }}
+        <div class="row">
+            <!-- Invoice Header -->
+            <div class="col-lg-12 mb-4">
+                <div class="card border-0 shadow">
+                    <div class="card-header bg-dark">
+                        <h5 class="mb-0">بيانات الفاتورة</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="invoice_number" class="form-label">رقم الفاتورة <span class="text-danger">*</span></label>
+                                {{ form.invoice_number(class="form-control" + (" is-invalid" if form.invoice_number.errors else ""), readonly=true) }}
+                                {% if form.invoice_number.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.invoice_number.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-3">
+                                <label for="type" class="form-label">نوع الفاتورة <span class="text-danger">*</span></label>
+                                {{ form.type(class="form-select" + (" is-invalid" if form.type.errors else ""), id="invoiceType") }}
+                                {% if form.type.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.type.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-3">
+                                <label for="date" class="form-label">تاريخ الفاتورة <span class="text-danger">*</span></label>
+                                {{ form.date(class="form-control" + (" is-invalid" if form.date.errors else ""), type="date") }}
+                                {% if form.date.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-3">
+                                <label for="due_date" class="form-label">تاريخ الاستحقاق</label>
+                                {{ form.due_date(class="form-control" + (" is-invalid" if form.due_date.errors else ""), type="date") }}
+                                {% if form.due_date.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.due_date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6" id="clientSection">
+                                <label for="client_id" class="form-label">العميل <span class="text-danger client-required">*</span></label>
+                                {{ form.client_id(class="form-select" + (" is-invalid" if form.client_id.errors else "")) }}
+                                {% if form.client_id.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.client_id.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6" id="supplierSection">
+                                <label for="supplier_id" class="form-label">المورد <span class="text-danger supplier-required">*</span></label>
+                                {{ form.supplier_id(class="form-select" + (" is-invalid" if form.supplier_id.errors else "")) }}
+                                {% if form.supplier_id.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.supplier_id.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label for="notes" class="form-label">ملاحظات</label>
+                                {{ form.notes(class="form-control" + (" is-invalid" if form.notes.errors else ""), rows="3") }}
+                                {% if form.notes.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.notes.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoice Items -->
+            <div class="col-lg-12 mb-4">
+                <div class="card border-0 shadow">
+                    <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">الأصناف</h5>
+                        <button type="button" id="addItemBtn" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus me-1"></i> إضافة صنف
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="itemsTable">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th>المنتج</th>
+                                        <th>الكمية</th>
+                                        <th>سعر الوحدة</th>
+                                        <th>الإجمالي</th>
+                                        <th width="80">الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsTableBody">
+                                    <!-- Items will be added here dynamically -->
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="3" class="text-end">الإجمالي:</th>
+                                        <th id="totalAmount">0.00 ج.م</th>
+                                        <th></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="col-12 mb-4">
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('operations.index') }}" class="btn btn-light me-md-2">إلغاء</a>
+                    <button type="button" id="saveInvoiceBtn" class="btn btn-primary">حفظ الفاتورة</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden input for items JSON data -->
+        <input type="hidden" id="itemsJson" name="itemsJson">
+    </form>
+
+    <!-- Add Item Modal -->
+    <div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addItemModalLabel">إضافة صنف</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="productSelect" class="form-label">المنتج <span class="text-danger">*</span></label>
+                        <select class="form-select" id="productSelect" required>
+                            <option value="">اختر المنتج...</option>
+                            {% for product in products %}
+                            <option value="{{ product.id }}" data-quantity="{{ product.quantity }}">{{ product.name }} ({{ product.color }})</option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback" id="productError">يرجى اختيار المنتج</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quantityInput" class="form-label">الكمية <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="quantityInput" min="1" required>
+                        <div class="invalid-feedback" id="quantityError">يرجى إدخال الكمية</div>
+                        <small id="availableQuantity" class="form-text text-muted"></small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="priceInput" class="form-label">سعر الوحدة <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="priceInput" min="0.01" step="0.01" required>
+                        <div class="invalid-feedback" id="priceError">يرجى إدخال سعر الوحدة</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-primary" id="confirmAddItem">إضافة</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get DOM elements
+        const invoiceType = document.getElementById('invoiceType');
+        const clientSection = document.getElementById('clientSection');
+        const supplierSection = document.getElementById('supplierSection');
+        const addItemBtn = document.getElementById('addItemBtn');
+        const itemsTableBody = document.getElementById('itemsTableBody');
+        const totalAmountElement = document.getElementById('totalAmount');
+        const saveInvoiceBtn = document.getElementById('saveInvoiceBtn');
+        const itemsJsonInput = document.getElementById('itemsJson');
+        const invoiceForm = document.getElementById('invoiceForm');
+
+        // Modal elements
+        const addItemModal = new bootstrap.Modal(document.getElementById('addItemModal'));
+        const productSelect = document.getElementById('productSelect');
+        const quantityInput = document.getElementById('quantityInput');
+        const priceInput = document.getElementById('priceInput');
+        const availableQuantity = document.getElementById('availableQuantity');
+        const confirmAddItemBtn = document.getElementById('confirmAddItem');
+
+        // Initialize items array
+        let items = [];
+
+        // Function to toggle client/supplier sections based on invoice type
+        function toggleEntitySections() {
+            const type = invoiceType.value;
+            
+            if (type === 'sale' || type === 'return') {
+                clientSection.style.display = 'block';
+                supplierSection.style.display = 'none';
+            } else if (type === 'purchase' || type === 'supplier_return') {
+                clientSection.style.display = 'none';
+                supplierSection.style.display = 'block';
+            } else {
+                clientSection.style.display = 'block';
+                supplierSection.style.display = 'block';
+            }
+        }
+
+        // Function to calculate total amount
+        function calculateTotal() {
+            const total = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+            totalAmountElement.textContent = total.toFixed(2) + ' ج.م';
+            return total;
+        }
+
+        // Function to add item to table
+        function addItemToTable(item, index) {
+            const totalPrice = item.quantity * item.unit_price;
+            
+            const tr = document.createElement('tr');
+            tr.dataset.index = index;
+            tr.innerHTML = `
+                <td>${item.product_name}</td>
+                <td>${item.quantity}</td>
+                <td>${item.unit_price.toFixed(2)} ج.م</td>
+                <td>${totalPrice.toFixed(2)} ج.م</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-danger remove-item" data-index="${index}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </td>
+            `;
+            
+            itemsTableBody.appendChild(tr);
+            
+            // Add event listener to remove button
+            tr.querySelector('.remove-item').addEventListener('click', function() {
+                removeItem(index);
+            });
+        }
+
+        // Function to render all items
+        function renderItems() {
+            // Clear table
+            itemsTableBody.innerHTML = '';
+            
+            // Add items
+            items.forEach((item, index) => {
+                addItemToTable(item, index);
+            });
+            
+            // Calculate total
+            calculateTotal();
+        }
+
+        // Function to remove item
+        function removeItem(index) {
+            items = items.filter((_, i) => i != index);
+            renderItems();
+        }
+
+        // Function to fetch product details
+        async function fetchProductDetails(productId) {
+            try {
+                const response = await fetch(`/operations/get_product_details/${productId}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch product details');
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching product details:', error);
+                return null;
+            }
+        }
+
+        // Event: Change invoice type
+        invoiceType.addEventListener('change', toggleEntitySections);
+
+        // Event: Click add item button
+        addItemBtn.addEventListener('click', function() {
+            // Reset modal form
+            productSelect.value = '';
+            quantityInput.value = '';
+            priceInput.value = '';
+            availableQuantity.textContent = '';
+            
+            // Remove validation errors
+            productSelect.classList.remove('is-invalid');
+            quantityInput.classList.remove('is-invalid');
+            priceInput.classList.remove('is-invalid');
+            
+            // Show modal
+            addItemModal.show();
+        });
+
+        // Event: Product select change
+        productSelect.addEventListener('change', async function() {
+            if (this.value) {
+                const productId = this.value;
+                const availableQty = this.options[this.selectedIndex].dataset.quantity;
+                
+                availableQuantity.textContent = `الكمية المتاحة: ${availableQty}`;
+                
+                // Fetch product details and set default price if needed
+                const productDetails = await fetchProductDetails(productId);
+                if (productDetails) {
+                    // Here you could set a default price if needed
+                }
+            } else {
+                availableQuantity.textContent = '';
+            }
+        });
+
+        // Event: Confirm add item button
+        confirmAddItemBtn.addEventListener('click', function() {
+            // Validate inputs
+            let isValid = true;
+            
+            if (!productSelect.value) {
+                productSelect.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                productSelect.classList.remove('is-invalid');
+            }
+            
+            if (!quantityInput.value || parseInt(quantityInput.value) < 1) {
+                quantityInput.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                quantityInput.classList.remove('is-invalid');
+            }
+            
+            if (!priceInput.value || parseFloat(priceInput.value) <= 0) {
+                priceInput.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                priceInput.classList.remove('is-invalid');
+            }
+            
+            if (!isValid) return;
+            
+            // Check available quantity for sales
+            if ((invoiceType.value === 'sale' || invoiceType.value === 'supplier_return') && 
+                parseInt(quantityInput.value) > parseInt(productSelect.options[productSelect.selectedIndex].dataset.quantity)) {
+                quantityInput.classList.add('is-invalid');
+                document.getElementById('quantityError').textContent = 'الكمية المطلوبة غير متوفرة في المخزون';
+                return;
+            }
+            
+            // Create item object
+            const item = {
+                product_id: parseInt(productSelect.value),
+                product_name: productSelect.options[productSelect.selectedIndex].text,
+                quantity: parseInt(quantityInput.value),
+                unit_price: parseFloat(priceInput.value)
+            };
+            
+            // Add item to array
+            items.push(item);
+            
+            // Render items
+            renderItems();
+            
+            // Hide modal
+            addItemModal.hide();
+        });
+
+        // Event: Save invoice button
+        saveInvoiceBtn.addEventListener('click', function() {
+            // Validate form
+            if (!invoiceForm.checkValidity()) {
+                invoiceForm.reportValidity();
+                return;
+            }
+            
+            // Validate entity selection based on invoice type
+            const type = invoiceType.value;
+            const clientId = document.getElementById('client_id').value;
+            const supplierId = document.getElementById('supplier_id').value;
+            
+            if ((type === 'sale' || type === 'return') && clientId == '0') {
+                alert('يرجى اختيار العميل');
+                return;
+            }
+            
+            if ((type === 'purchase' || type === 'supplier_return') && supplierId == '0') {
+                alert('يرجى اختيار المورد');
+                return;
+            }
+            
+            // Validate items
+            if (items.length === 0) {
+                alert('يرجى إضافة صنف واحد على الأقل');
+                return;
+            }
+            
+            // Set items json
+            itemsJsonInput.value = JSON.stringify(items);
+            
+            // Submit form
+            invoiceForm.submit();
+        });
+
+        // Initialize entity sections visibility
+        toggleEntitySections();
+
+        // Initialize with URL params if present
+        const urlParams = new URLSearchParams(window.location.search);
+        const clientIdParam = urlParams.get('client_id');
+        const supplierIdParam = urlParams.get('supplier_id');
+        const typeParam = urlParams.get('type');
+        
+        if (clientIdParam) {
+            document.getElementById('client_id').value = clientIdParam;
+        }
+        
+        if (supplierIdParam) {
+            document.getElementById('supplier_id').value = supplierIdParam;
+        }
+        
+        if (typeParam) {
+            invoiceType.value = typeParam;
+            toggleEntitySections();
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

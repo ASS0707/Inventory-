@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}تعديل منتج - نظام إدارة مبيعات الملابس{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('inventory.index') }}">المخزون</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('inventory.view', product_id=product.id) }}">{{ product.name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">تعديل</li>
+                </ol>
+            </nav>
+            <h1 class="display-5 mb-4"><i class="fas fa-edit me-2"></i>تعديل منتج</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card border-0 shadow">
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('inventory.edit', product_id=product.id) }}">
+                        {{ form.hidden_tag() }}
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">اسم المنتج <span class="text-danger">*</span></label>
+                                {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else ""), placeholder="أدخل اسم المنتج") }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="color" class="form-label">اللون <span class="text-danger">*</span></label>
+                                {{ form.color(class="form-control" + (" is-invalid" if form.color.errors else ""), placeholder="أدخل اللون") }}
+                                {% if form.color.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.color.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="material" class="form-label">المادة <span class="text-danger">*</span></label>
+                                {{ form.material(class="form-control" + (" is-invalid" if form.material.errors else ""), placeholder="أدخل المادة") }}
+                                {% if form.material.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.material.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="quantity" class="form-label">الكمية <span class="text-danger">*</span></label>
+                                {{ form.quantity(class="form-control" + (" is-invalid" if form.quantity.errors else ""), placeholder="أدخل الكمية") }}
+                                {% if form.quantity.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.quantity.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="type" class="form-label">النوع <span class="text-danger">*</span></label>
+                                {{ form.type(class="form-select" + (" is-invalid" if form.type.errors else "")) }}
+                                {% if form.type.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.type.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="finishing_cost" class="form-label">تكلفة التشطيب <span class="text-danger">*</span></label>
+                                {{ form.finishing_cost(class="form-control" + (" is-invalid" if form.finishing_cost.errors else ""), placeholder="تكلفة التشطيب") }}
+                                {% if form.finishing_cost.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.finishing_cost.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="printing_cost" class="form-label">تكلفة الطباعة</label>
+                                {{ form.printing_cost(class="form-control" + (" is-invalid" if form.printing_cost.errors else ""), placeholder="تكلفة الطباعة", id="printing_cost") }}
+                                {% if form.printing_cost.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.printing_cost.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{{ url_for('inventory.view', product_id=product.id) }}" class="btn btn-light me-md-2">إلغاء</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Show/hide printing cost based on type
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.getElementById('type');
+        const printingCostField = document.getElementById('printing_cost').parentElement;
+        
+        function togglePrintingCost() {
+            if (typeSelect.value === 'Printed') {
+                printingCostField.style.display = 'block';
+            } else {
+                printingCostField.style.display = 'none';
+            }
+        }
+        
+        // Initial state
+        togglePrintingCost();
+        
+        // On change
+        typeSelect.addEventListener('change', togglePrintingCost);
+    });
+</script>
+{% endblock %}
+{% endblock %}

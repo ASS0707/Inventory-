@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }} - المخزون{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('inventory.index') }}">المخزون</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="display-5 mb-4">
+                    <i class="fas fa-box me-2"></i>تفاصيل المنتج
+                </h1>
+                <a href="{{ url_for('inventory.edit', product_id=product.id) }}" class="btn btn-warning">
+                    <i class="fas fa-edit me-1"></i> تعديل المنتج
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Product Details -->
+        <div class="col-lg-5 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0">بيانات المنتج</h5>
+                </div>
+                <div class="card-body">
+                    <div class="product-info">
+                        <h3>{{ product.name }}</h3>
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <p><strong>اللون:</strong> {{ product.color }}</p>
+                                <p><strong>المادة:</strong> {{ product.material }}</p>
+                                <p><strong>النوع:</strong> 
+                                    {% if product.type == 'Plain' %}
+                                        <span class="badge bg-secondary">عادي</span>
+                                    {% else %}
+                                        <span class="badge bg-primary">مطبوع</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>الكمية المتاحة:</strong> 
+                                    <span class="badge bg-{{ 'danger' if product.quantity < 10 else 'success' }} fs-6">
+                                        {{ product.quantity }}
+                                    </span>
+                                </p>
+                                <p><strong>تكلفة التشطيب:</strong> {{ product.finishing_cost|egp }}</p>
+                                {% if product.type == 'Printed' %}
+                                <p><strong>تكلفة الطباعة:</strong> {{ product.printing_cost|egp }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>تاريخ الإضافة:</strong> {{ product.created_at|aradate }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>آخر تحديث:</strong> {{ product.updated_at|aradate }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Movement History -->
+        <div class="col-lg-7 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0">حركة المنتج</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>التاريخ</th>
+                                    <th>نوع العملية</th>
+                                    <th>رقم الفاتورة</th>
+                                    <th>العميل/المورد</th>
+                                    <th>الكمية</th>
+                                    <th>السعر</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invoice in invoices %}
+                                    {% for item in invoice.items %}
+                                        {% if item.product_id == product.id %}
+                                        <tr>
+                                            <td>{{ invoice.date|aradate }}</td>
+                                            <td>
+                                                {% if invoice.type == 'sale' %}
+                                                    <span class="badge bg-success">مبيعات</span>
+                                                {% elif invoice.type == 'purchase' %}
+                                                    <span class="badge bg-primary">مشتريات</span>
+                                                {% elif invoice.type == 'return' %}
+                                                    <span class="badge bg-warning">مرتجع من عميل</span>
+                                                {% elif invoice.type == 'supplier_return' %}
+                                                    <span class="badge bg-danger">مرتجع إلى مورد</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('operations.view_invoice', invoice_id=invoice.id) }}">
+                                                    {{ invoice.invoice_number }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                {% if invoice.client_id %}
+                                                    {{ invoice.client.name }}
+                                                {% elif invoice.supplier_id %}
+                                                    {{ invoice.supplier.name }}
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ item.quantity }}</td>
+                                            <td>{{ item.unit_price|egp }}</td>
+                                        </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-3">لا توجد حركات لهذا المنتج</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

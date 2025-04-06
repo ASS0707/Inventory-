@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}إضافة مورد جديد - نظام إدارة مبيعات الملابس{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('suppliers.index') }}">الموردين</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">إضافة مورد جديد</li>
+                </ol>
+            </nav>
+            <h1 class="display-5 mb-4"><i class="fas fa-truck me-2"></i>إضافة مورد جديد</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card border-0 shadow">
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('suppliers.add') }}">
+                        {{ form.hidden_tag() }}
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">اسم المورد <span class="text-danger">*</span></label>
+                                {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else ""), placeholder="أدخل اسم المورد") }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">رقم الهاتف <span class="text-danger">*</span></label>
+                                {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else ""), placeholder="أدخل رقم الهاتف") }}
+                                {% if form.phone.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.phone.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">البريد الإلكتروني</label>
+                                {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="أدخل البريد الإلكتروني") }}
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.email.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="address" class="form-label">العنوان</label>
+                                {{ form.address(class="form-control" + (" is-invalid" if form.address.errors else ""), placeholder="أدخل العنوان") }}
+                                {% if form.address.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.address.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{{ url_for('suppliers.index') }}" class="btn btn-light me-md-2">إلغاء</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}التقارير والإحصاءات - نظام إدارة مبيعات الملابس{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-5 mb-4"><i class="fas fa-chart-pie me-2"></i>التقارير والإحصاءات</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Profit Reports -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-chart-line text-primary fa-4x"></i>
+                    </div>
+                    <h4 class="card-title">تقرير الأرباح</h4>
+                    <p class="card-text">تحليل تفصيلي للمبيعات والأرباح حسب الفترة</p>
+                    <a href="{{ url_for('reports.profit_report') }}" class="btn btn-primary">
+                        <i class="fas fa-eye me-1"></i> عرض التقرير
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Products -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-tshirt text-success fa-4x"></i>
+                    </div>
+                    <h4 class="card-title">المنتجات الأكثر مبيعاً</h4>
+                    <p class="card-text">تحليل لأكثر المنتجات مبيعاً حسب الكمية والقيمة</p>
+                    <a href="{{ url_for('reports.top_products') }}" class="btn btn-success">
+                        <i class="fas fa-eye me-1"></i> عرض التقرير
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Clients -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-users text-info fa-4x"></i>
+                    </div>
+                    <h4 class="card-title">كبار العملاء</h4>
+                    <p class="card-text">تقرير بأهم العملاء حسب قيمة المشتريات</p>
+                    <a href="{{ url_for('reports.top_clients') }}" class="btn btn-info">
+                        <i class="fas fa-eye me-1"></i> عرض التقرير
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Suppliers -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-truck text-secondary fa-4x"></i>
+                    </div>
+                    <h4 class="card-title">كبار الموردين</h4>
+                    <p class="card-text">تقرير بأهم الموردين حسب قيمة المشتريات</p>
+                    <a href="{{ url_for('reports.top_suppliers') }}" class="btn btn-secondary">
+                        <i class="fas fa-eye me-1"></i> عرض التقرير
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aging Report -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-hourglass-half text-warning fa-4x"></i>
+                    </div>
+                    <h4 class="card-title">تقرير أعمار الديون</h4>
+                    <p class="card-text">تحليل المستحقات المالية حسب تاريخ الاستحقاق</p>
+                    <a href="{{ url_for('reports.aging_report') }}" class="btn btn-warning">
+                        <i class="fas fa-eye me-1"></i> عرض التقرير
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Report -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-boxes text-danger fa-4x"></i>
+                    </div>
+                    <h4 class="card-title">تقرير المخزون</h4>
+                    <p class="card-text">تقرير تفصيلي بحالة المخزون الحالية</p>
+                    <a href="{{ url_for('reports.export_excel', report_type='inventory') }}" class="btn btn-danger">
+                        <i class="fas fa-download me-1"></i> تنزيل التقرير
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

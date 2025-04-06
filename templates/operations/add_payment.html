@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}إضافة دفعة جديدة - فاتورة رقم {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('operations.index') }}">العمليات والفواتير</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('operations.view_invoice', invoice_id=invoice.id) }}">{{ invoice.invoice_number }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">إضافة دفعة</li>
+                </ol>
+            </nav>
+            <h1 class="display-5 mb-4"><i class="fas fa-money-bill-wave me-2"></i>إضافة دفعة جديدة</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Invoice Summary -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0">ملخص الفاتورة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h5 class="text-muted">رقم الفاتورة</h5>
+                        <h4>{{ invoice.invoice_number }}</h4>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5 class="text-muted">نوع الفاتورة</h5>
+                        <h4>
+                            {% if invoice.type == 'sale' %}
+                                <span class="badge bg-success">مبيعات</span>
+                            {% elif invoice.type == 'purchase' %}
+                                <span class="badge bg-primary">مشتريات</span>
+                            {% elif invoice.type == 'return' %}
+                                <span class="badge bg-warning">مرتجع من عميل</span>
+                            {% elif invoice.type == 'supplier_return' %}
+                                <span class="badge bg-danger">مرتجع إلى مورد</span>
+                            {% endif %}
+                        </h4>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5 class="text-muted">
+                            {% if invoice.client_id %}
+                                العميل
+                            {% else %}
+                                المورد
+                            {% endif %}
+                        </h5>
+                        <h4>
+                            {% if invoice.client_id %}
+                                {{ invoice.client.name }}
+                            {% else %}
+                                {{ invoice.supplier.name }}
+                            {% endif %}
+                        </h4>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5 class="text-muted">إجمالي الفاتورة</h5>
+                        <h4>{{ invoice.total_amount|egp }}</h4>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5 class="text-muted">المبلغ المدفوع</h5>
+                        <h4>{{ invoice.calculate_paid_amount()|egp }}</h4>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5 class="text-muted">المبلغ المتبقي</h5>
+                        <h4 class="text-danger">{{ invoice.calculate_remaining_amount()|egp }}</h4>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5 class="text-muted">حالة الدفع</h5>
+                        <h4>
+                            {% if invoice.status == 'paid' %}
+                                <span class="badge bg-success">مدفوع</span>
+                            {% elif invoice.status == 'partial' %}
+                                <span class="badge bg-warning">مدفوع جزئي</span>
+                            {% else %}
+                                <span class="badge bg-danger">غير مدفوع</span>
+                            {% endif %}
+                        </h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Form -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0">تفاصيل الدفعة</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('operations.add_payment', invoice_id=invoice.id) }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="amount" class="form-label">المبلغ <span class="text-danger">*</span></label>
+                                {{ form.amount(class="form-control" + (" is-invalid" if form.amount.errors else ""), placeholder="أدخل المبلغ") }}
+                                {% if form.amount.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.amount.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">المبلغ المتبقي: {{ invoice.calculate_remaining_amount()|egp }}</small>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="payment_date" class="form-label">تاريخ الدفع <span class="text-danger">*</span></label>
+                                {{ form.payment_date(class="form-control" + (" is-invalid" if form.payment_date.errors else ""), type="date") }}
+                                {% if form.payment_date.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.payment_date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="payment_method" class="form-label">طريقة الدفع <span class="text-danger">*</span></label>
+                                {{ form.payment_method(class="form-select" + (" is-invalid" if form.payment_method.errors else "")) }}
+                                {% if form.payment_method.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.payment_method.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="reference_number" class="form-label">الرقم المرجعي</label>
+                                {{ form.reference_number(class="form-control" + (" is-invalid" if form.reference_number.errors else ""), placeholder="رقم الشيك / التحويل") }}
+                                {% if form.reference_number.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.reference_number.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label for="notes" class="form-label">ملاحظات</label>
+                                {{ form.notes(class="form-control" + (" is-invalid" if form.notes.errors else ""), rows="3", placeholder="ملاحظات إضافية") }}
+                                {% if form.notes.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.notes.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{{ url_for('operations.view_invoice', invoice_id=invoice.id) }}" class="btn btn-light me-md-2">إلغاء</a>
+                            {{ form.submit(class="btn btn-success") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const amountInput = document.getElementById('amount');
+        const payFullButton = document.getElementById('pay-full');
+        
+        // Helper function to set the amount to the remaining balance
+        function setFullAmount() {
+            const remainingAmount = {{ invoice.calculate_remaining_amount() }};
+            amountInput.value = remainingAmount.toFixed(2);
+            return false;
+        }
+        
+        // Add event listener if button exists
+        if (payFullButton) {
+            payFullButton.addEventListener('click', setFullAmount);
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,225 @@
+/* Main Stylesheet */
+
+/* Google Font Import - Tajawal */
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+
+body {
+    font-family: 'Tajawal', sans-serif;
+    background-color: #f5f8fa;
+    color: #333;
+}
+
+/* Sidebar */
+.sidebar {
+    background-color: #2c3e50;
+    min-height: 100vh;
+    position: fixed;
+    width: 250px;
+    z-index: 100;
+    transition: all 0.3s;
+}
+
+.sidebar-header {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-brand {
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.sidebar-nav {
+    padding: 1rem 0;
+}
+
+.sidebar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.8);
+    padding: 0.75rem 1.25rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.sidebar-nav .nav-link:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-nav .nav-link.active {
+    color: #fff;
+    background-color: #546E7A;
+}
+
+.sidebar-nav .nav-link i {
+    width: 24px;
+    text-align: center;
+    margin-right: 8px;
+}
+
+.sidebar-footer {
+    padding: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+
+/* Main Content */
+.main-content {
+    margin-right: 250px;
+    padding: 1rem;
+    min-height: 100vh;
+    transition: all 0.3s;
+}
+
+/* Cards */
+.card {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    border-bottom: none;
+    font-weight: 600;
+    padding: 1rem 1.25rem;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+/* Stats cards */
+.stat-card {
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    height: 100%;
+}
+
+.stat-card .stat-card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.stat-card .stat-card-title {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+}
+
+.stat-card .stat-card-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0;
+}
+
+/* Tables */
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    border-top: none;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+    padding: 0.75rem 1.25rem;
+}
+
+.table tbody td {
+    vertical-align: middle;
+    padding: 0.75rem 1.25rem;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 0.375rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+}
+
+.btn-primary {
+    background-color: #5e72e4;
+    border-color: #5e72e4;
+}
+
+.btn-primary:hover {
+    background-color: #324cdd;
+    border-color: #324cdd;
+}
+
+.btn-success {
+    background-color: #2dce89;
+    border-color: #2dce89;
+}
+
+.btn-success:hover {
+    background-color: #26af74;
+    border-color: #26af74;
+}
+
+.btn-danger {
+    background-color: #f5365c;
+    border-color: #f5365c;
+}
+
+.btn-danger:hover {
+    background-color: #ec0c38;
+    border-color: #ec0c38;
+}
+
+.btn-warning {
+    background-color: #fb6340;
+    border-color: #fb6340;
+    color: #fff;
+}
+
+.btn-warning:hover {
+    background-color: #fa3a0e;
+    border-color: #fa3a0e;
+    color: #fff;
+}
+
+.btn-info {
+    background-color: #11cdef;
+    border-color: #11cdef;
+    color: #fff;
+}
+
+.btn-info:hover {
+    background-color: #0da5c0;
+    border-color: #0da5c0;
+    color: #fff;
+}
+
+/* Badges */
+.badge {
+    padding: 0.4em 0.65em;
+    font-weight: 600;
+    border-radius: 0.375rem;
+}
+
+/* Forms */
+.form-control {
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-select {
+    border-radius: 0.375rem;
+    padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+}

@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+{% block title %}العمليات والفواتير - نظام إدارة مبيعات الملابس{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col d-flex justify-content-between align-items-center">
+            <h1 class="display-5"><i class="fas fa-file-invoice-dollar me-2"></i>العمليات والفواتير</h1>
+            <a href="{{ url_for('operations.create_invoice') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-1"></i> إنشاء فاتورة جديدة
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card border-0 shadow">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('operations.index') }}" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="type" class="form-label">نوع العملية</label>
+                            <select class="form-select" id="type" name="type">
+                                <option value="">الكل</option>
+                                <option value="sale" {% if request.args.get('type') == 'sale' %}selected{% endif %}>مبيعات</option>
+                                <option value="purchase" {% if request.args.get('type') == 'purchase' %}selected{% endif %}>مشتريات</option>
+                                <option value="return" {% if request.args.get('type') == 'return' %}selected{% endif %}>مرتجع من عميل</option>
+                                <option value="supplier_return" {% if request.args.get('type') == 'supplier_return' %}selected{% endif %}>مرتجع إلى مورد</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="date_from" class="form-label">من تاريخ</label>
+                            <input type="date" class="form-control" id="date_from" name="date_from" value="{{ request.args.get('date_from', '') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="date_to" class="form-label">إلى تاريخ</label>
+                            <input type="date" class="form-control" id="date_to" name="date_to" value="{{ request.args.get('date_to', '') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="client_id" class="form-label">العميل</label>
+                            <select class="form-select" id="client_id" name="client_id">
+                                <option value="">الكل</option>
+                                {% for client in clients %}
+                                <option value="{{ client.id }}" {% if request.args.get('client_id')|int == client.id %}selected{% endif %}>{{ client.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="supplier_id" class="form-label">المورد</label>
+                            <select class="form-select" id="supplier_id" name="supplier_id">
+                                <option value="">الكل</option>
+                                {% for supplier in suppliers %}
+                                <option value="{{ supplier.id }}" {% if request.args.get('supplier_id')|int == supplier.id %}selected{% endif %}>{{ supplier.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Operations Table -->
+    <div class="row">
+        <div class="col">
+            <div class="card border-0 shadow">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>رقم الفاتورة</th>
+                                    <th>النوع</th>
+                                    <th>التاريخ</th>
+                                    <th>تاريخ الاستحقاق</th>
+                                    <th>العميل/المورد</th>
+                                    <th>المبلغ الإجمالي</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for operation in operations.items %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('operations.view_invoice', invoice_id=operation.id) }}">
+                                            {{ operation.invoice_number }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if operation.type == 'sale' %}
+                                            <span class="badge bg-success">مبيعات</span>
+                                        {% elif operation.type == 'purchase' %}
+                                            <span class="badge bg-primary">مشتريات</span>
+                                        {% elif operation.type == 'return' %}
+                                            <span class="badge bg-warning">مرتجع من عميل</span>
+                                        {% elif operation.type == 'supplier_return' %}
+                                            <span class="badge bg-danger">مرتجع إلى مورد</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ operation.date|aradate }}</td>
+                                    <td>{{ operation.due_date|aradate if operation.due_date else '-' }}</td>
+                                    <td>
+                                        {% if operation.client_id %}
+                                            <a href="{{ url_for('clients.view', client_id=operation.client_id) }}">
+                                                {{ operation.client.name }}
+                                            </a>
+                                        {% elif operation.supplier_id %}
+                                            <a href="{{ url_for('suppliers.view', supplier_id=operation.supplier_id) }}">
+                                                {{ operation.supplier.name }}
+                                            </a>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ operation.total_amount|egp }}</td>
+                                    <td>
+                                        {% if operation.status == 'paid' %}
+                                            <span class="badge bg-success">مدفوع</span>
+                                        {% elif operation.status == 'partial' %}
+                                            <span class="badge bg-warning">مدفوع جزئي</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">غير مدفوع</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ url_for('operations.view_invoice', invoice_id=operation.id) }}" class="btn btn-info" title="عرض">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('operations.edit_invoice', invoice_id=operation.id) }}" class="btn btn-warning" title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% if operation.status != 'paid' %}
+                                            <a href="{{ url_for('operations.add_payment', invoice_id=operation.id) }}" class="btn btn-success" title="إضافة دفعة">
+                                                <i class="fas fa-money-bill-wave"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-3">لا توجد عمليات مطابقة للبحث</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if operations.pages > 1 %}
+    <div class="row mt-3">
+        <div class="col d-flex justify-content-center">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    {% if operations.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('operations.index', page=operations.prev_num, type=request.args.get('type', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', ''), client_id=request.args.get('client_id', ''), supplier_id=request.args.get('supplier_id', '')) }}">
+                            السابق
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">السابق</a>
+                    </li>
+                    {% endif %}
+
+                    {% for page_num in operations.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                            {% if page_num == operations.page %}
+                            <li class="page-item active" aria-current="page">
+                                <a class="page-link" href="#">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('operations.index', page=page_num, type=request.args.get('type', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', ''), client_id=request.args.get('client_id', ''), supplier_id=request.args.get('supplier_id', '')) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#">...</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if operations.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('operations.index', page=operations.next_num, type=request.args.get('type', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', ''), client_id=request.args.get('client_id', ''), supplier_id=request.args.get('supplier_id', '')) }}">
+                            التالي
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">التالي</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
