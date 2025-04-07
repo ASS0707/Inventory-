@@ -2,15 +2,9 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from sqlalchemy import desc
 import datetime
-import random
-import string
-import io
-from weasyprint import HTML, CSS
-from weasyprint.text.fonts import FontConfiguration
-
 from app import db
 from models import Invoice, InvoiceItem, Product, Client, Supplier, Payment, SystemLog
-from forms.operations import InvoiceForm, InvoiceItemForm, PaymentForm
+from forms.operations import PaymentForm
 
 operations_bp = Blueprint('operations', __name__, url_prefix='/operations')
 
@@ -364,71 +358,63 @@ def add_payment(invoice_id):
     invoice = Invoice.query.get_or_404(invoice_id)
     form = PaymentForm()
 
-    # Clear the existing choices and just use the linked invoice
-    form.invoice_id.data = invoice_id
-
     # Set default values
-    form.amount.data = invoice.calculate_remaining_amount()
-    form.payment_date.data = datetime.datetime.now()
+    form.invoice_id.data = invoice_id
+    if request.method == 'GET':
+        form.amount.data = invoice.calculate_remaining_amount()
+        form.payment_date.data = datetime.datetime.now()
 
     if form.validate_on_submit():
-        payment = Payment(
-            invoice_id=invoice_id,
-            amount=form.amount.data,
-            payment_date=form.payment_date.data,
-            payment_method=form.payment_method.data,
-            reference_number=form.reference_number.data,
-            notes=form.notes.data,
-            created_by=current_user.id
-        )
-
-        # Set client or supplier based on invoice type
-        if invoice.type in ['sale', 'return']:
-            payment.client_id = invoice.client_id
-        elif invoice.type in ['purchase', 'supplier_return']:
-            payment.supplier_id = invoice.supplier_id
-
-        # Log the payment
-        entity_name = Client.query.get(invoice.client_id).name if invoice.client_id else Supplier.query.get(invoice.supplier_id).name
-        log = SystemLog(
-            action='payment_add',
-            details=f'إضافة دفعة للفاتورة {invoice.invoice_number} ({entity_name}): {payment.amount} ج.م',
-            user_id=current_user.id
-        )
-
         try:
-            # Get and validate the submitted amount with proper decimal handling
-            submitted_amount = round(float(form.amount.data), 2)
-            
-            # Basic validation
-            if submitted_amount <= 0:
+            # Validate payment amount
+            payment_amount = round(float(form.amount.data), 2)
+            remaining_amount = invoice.calculate_remaining_amount()
+
+            if payment_amount <= 0:
                 flash('مبلغ الدفع يجب أن يكون أكبر من 0', 'danger')
                 return redirect(url_for('operations.add_payment', invoice_id=invoice_id))
 
-            # Get current remaining amount
-            remaining = invoice.calculate_remaining_amount()
-            
-            # Strict validation against remaining amount
-            if submitted_amount > remaining:
-                flash(f'مبلغ الدفع ({submitted_amount:.2f} ج.م) يتجاوز المبلغ المتبقي ({remaining:.2f} ج.م)', 'danger')
+            if payment_amount > remaining_amount:
+                flash(f'مبلغ الدفع ({payment_amount:.2f} ج.م) يتجاوز المبلغ المتبقي ({remaining_amount:.2f} ج.م)', 'danger')
                 return redirect(url_for('operations.add_payment', invoice_id=invoice_id))
 
-            # Set the validated payment amount
-            payment.amount = submitted_amount
-            
-            # Add payment and log
-            db.session.add(payment)
-            db.session.add(log)
-            
-            # Update invoice status and commit
-            invoice.update_status()
-            db.session.commit()
+            # Create payment record
+            payment = Payment(
+                invoice_id=invoice_id,
+                amount=payment_amount,
+                payment_date=form.payment_date.data,
+                payment_method=form.payment_method.data,
+                reference_number=form.reference_number.data,
+                notes=form.notes.data,
+                created_by=current_user.id
+            )
 
-            flash(f'تم إضافة الدفعة بمبلغ {payment.amount} ج.م بنجاح', 'success')
+            # Set client or supplier based on invoice type
+            if invoice.type in ['sale', 'return']:
+                payment.client_id = invoice.client_id
+            else:
+                payment.supplier_id = invoice.supplier_id
+
+            # Add payment and update invoice status
+            db.session.add(payment)
+            invoice.update_status()
+
+            # Log the payment
+            entity_name = invoice.client.name if invoice.client_id else invoice.supplier.name
+            log = SystemLog(
+                action='payment_add',
+                details=f'إضافة دفعة للفاتورة {invoice.invoice_number} ({entity_name}): {payment_amount} ج.م',
+                user_id=current_user.id
+            )
+            db.session.add(log)
+
+            db.session.commit()
+            flash(f'تم إضافة الدفعة بمبلغ {payment_amount} ج.م بنجاح', 'success')
             return redirect(url_for('operations.view_invoice', invoice_id=invoice_id))
+
         except ValueError as e:
             db.session.rollback()
-            flash(str(e), 'danger')
+            flash('خطأ في قيمة المبلغ المدخل', 'danger')
             return redirect(url_for('operations.add_payment', invoice_id=invoice_id))
         except Exception as e:
             db.session.rollback()
