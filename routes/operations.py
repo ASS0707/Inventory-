@@ -396,15 +396,20 @@ def add_payment(invoice_id):
             user_id=current_user.id
         )
         
-        db.session.add(payment)
-        db.session.add(log)
-        
-        # Update invoice status
-        invoice.update_status()
-        db.session.commit()
-        
-        flash(f'تم إضافة الدفعة بمبلغ {payment.amount} ج.م بنجاح', 'success')
-        return redirect(url_for('operations.view_invoice', invoice_id=invoice_id))
+        try:
+            db.session.add(payment)
+            db.session.add(log)
+            
+            # Update invoice status
+            invoice.update_status()
+            db.session.commit()
+            
+            flash(f'تم إضافة الدفعة بمبلغ {payment.amount} ج.م بنجاح', 'success')
+            return redirect(url_for('operations.view_invoice', invoice_id=invoice_id))
+        except Exception as e:
+            db.session.rollback()
+            flash('حدث خطأ أثناء معالجة الدفعة. يرجى التحقق من تفاصيل الدفع أو المحاولة مرة أخرى.', 'danger')
+            return redirect(url_for('operations.add_payment', invoice_id=invoice_id))
     
     return render_template(
         'operations/add_payment.html',
