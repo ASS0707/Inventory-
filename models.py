@@ -182,6 +182,7 @@ class Payment(db.Model):
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
     supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=True)
     amount = db.Column(db.Float, nullable=False)
+    is_deposit = db.Column(db.Boolean, default=False)
     payment_date = db.Column(db.DateTime, default=datetime.utcnow)
     payment_method = db.Column(db.String(50))  # 'cash', 'bank_transfer', etc.
     reference_number = db.Column(db.String(100))

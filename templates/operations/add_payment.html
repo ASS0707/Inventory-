@@ -135,6 +135,12 @@
                             <div class="col-md-6">
                                 <label for="payment_method" class="form-label">طريقة الدفع <span class="text-danger">*</span></label>
                                 {{ form.payment_method(class="form-select" + (" is-invalid" if form.payment_method.errors else "")) }}
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mt-4">
+                                    {{ form.is_deposit(class="form-check-input") }}
+                                    <label class="form-check-label" for="is_deposit">دفعة مقدمة</label>
+                                </div>
                                 {% if form.payment_method.errors %}
                                     <div class="invalid-feedback">
                                         {% for error in form.payment_method.errors %}
