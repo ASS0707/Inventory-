@@ -417,14 +417,8 @@ def add_payment(invoice_id):
 
             db.session.add(payment)
             db.session.add(log)
-            db.session.flush()  # Flush to get payment ID without committing
-
-            # Verify the payment was recorded correctly
-            recorded_payment = Payment.query.get(payment.id)
-            if abs(recorded_payment.amount - original_amount) > 0.01:
-                raise ValueError(f"Payment amount mismatch detected. Expected: {original_amount} ج.م, Got: {recorded_payment.amount} ج.م")
-
-            # If verification passes, update invoice status and commit
+            
+            # Update invoice status and commit
             invoice.update_status()
             db.session.commit()
 
