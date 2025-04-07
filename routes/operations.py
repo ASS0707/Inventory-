@@ -361,6 +361,9 @@ def add_payment(invoice_id):
     invoice = Invoice.query.get_or_404(invoice_id)
     form = PaymentForm()
     
+    # Clear the existing choices and just use the linked invoice
+    form.invoice_id.data = invoice_id
+    
     # Set default values
     form.amount.data = invoice.calculate_remaining_amount()
     form.payment_date.data = datetime.datetime.now()

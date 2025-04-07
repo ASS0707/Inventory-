@@ -128,10 +128,8 @@ def add_payment(client_id):
     client = Client.query.get_or_404(client_id)
     form = PaymentForm()
     
-    # Get client invoices with remaining balance for dropdown
-    invoices = Invoice.query.filter_by(client_id=client_id).filter(Invoice.status != 'paid').all()
-    form.invoice_id.choices = [(0, 'دفعة عامة (غير مرتبطة بفاتورة)')]
-    form.invoice_id.choices += [(invoice.id, f'{invoice.invoice_number} - {invoice.total_amount} ج.م') for invoice in invoices]
+    # For client payments, we can safely skip checking for invoice selection
+    # and use the default choices that are already set in the form definition
     
     if form.validate_on_submit():
         payment = Payment(
