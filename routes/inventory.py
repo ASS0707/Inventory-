@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from sqlalchemy import desc
+from routes import admin_required
 
 from app import db, app
 from models import Product, SystemLog

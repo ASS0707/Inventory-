@@ -659,6 +659,10 @@ def export_invoice_pdf(invoice_id):
     """
 
     # Configure font
+    from weasyprint import HTML, CSS
+    from weasyprint.fonts import FontConfiguration
+    import io
+
     font_config = FontConfiguration()
 
     # Generate PDF
