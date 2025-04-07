@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, url_for
 from flask_login import login_required
 from sqlalchemy import func
 from datetime import datetime, timedelta
@@ -29,7 +29,7 @@ def index():
     alerts = get_system_alerts()
     
     return render_template(
-        'dashboard.html',
+        'dashboard/index.html',
         total_cash=total_cash,
         clients_outstanding=clients_outstanding,
         suppliers_outstanding=suppliers_outstanding,
