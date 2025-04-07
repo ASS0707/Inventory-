@@ -13,7 +13,7 @@ class User(UserMixin, db.Model):
     last_login = db.Column(db.DateTime)
     reset_token = db.Column(db.String(32), unique=True, nullable=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
-    login_logs = db.relationship('LoginLog', backref='user', lazy=True)
+    login_logs = db.relationship('LoginLog', backref='user', lazy=True, cascade='all, delete-orphan')
 
 
 class LoginLog(db.Model):
