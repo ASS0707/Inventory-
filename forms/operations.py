@@ -31,7 +31,6 @@ class PaymentForm(FlaskForm):
     invoice_id = SelectField('الفاتورة', coerce=int, validators=[Optional()], 
                            choices=[(0, 'دفعة عامة (غير مرتبطة بفاتورة)')], default=0)
     amount = FloatField('المبلغ', validators=[DataRequired(), NumberRange(min=0.01)])
-    is_deposit = BooleanField('دفعة مقدمة')
     payment_date = DateField('تاريخ الدفع', validators=[DataRequired()], default=datetime.datetime.now)
     payment_method = SelectField('طريقة الدفع', choices=[
         ('cash', 'نقدي'),

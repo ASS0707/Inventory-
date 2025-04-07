@@ -13,12 +13,12 @@ class User(UserMixin, db.Model):
     last_login = db.Column(db.DateTime)
     reset_token = db.Column(db.String(32), unique=True, nullable=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
-    login_logs = db.relationship('LoginLog', backref='user', lazy=True, cascade='all, delete-orphan', passive_deletes=True)
+    login_logs = db.relationship('LoginLog', backref='user', lazy=True, cascade='all, delete-orphan')
 
 
 class LoginLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     login_time = db.Column(db.DateTime, default=datetime.utcnow)
     ip_address = db.Column(db.String(45))
     success = db.Column(db.Boolean, default=True)
@@ -182,7 +182,6 @@ class Payment(db.Model):
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
     supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=True)
     amount = db.Column(db.Float, nullable=False)
-    is_deposit = db.Column(db.Boolean, default=False)
     payment_date = db.Column(db.DateTime, default=datetime.utcnow)
     payment_method = db.Column(db.String(50))  # 'cash', 'bank_transfer', etc.
     reference_number = db.Column(db.String(100))
