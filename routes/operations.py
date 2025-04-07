@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from sqlalchemy import desc
 import datetime
+import random
+import string
 from app import db
 from models import Invoice, InvoiceItem, Product, Client, Supplier, Payment, SystemLog
 from forms.operations import PaymentForm, InvoiceForm
