@@ -125,12 +125,12 @@
     </div>
 </div>
 
-{% block extra_js %}
+{% block scripts %}
 <script>
     // Show/hide printing cost based on type
     document.addEventListener('DOMContentLoaded', function() {
         const typeSelect = document.getElementById('type');
-        const printingCostField = document.getElementById('printing_cost').parentElement;
+        const printingCostField = document.getElementById('printing_cost').closest('.col-md-4');
         
         function togglePrintingCost() {
             if (typeSelect.value === 'Printed') {

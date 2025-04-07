@@ -1,26 +1,26 @@
-/* RTL Support Stylesheet */
+/* RTL specific styles */
 
-/* Sidebar RTL Adjustments */
+/* Adjust sidebar and main content for RTL */
 .sidebar {
     right: 0;
     left: auto;
 }
 
-.sidebar-nav .nav-link i {
-    margin-left: 8px;
-    margin-right: 0;
-}
-
-/* Main Content RTL Adjustments */
 .main-content {
+    margin-right: var(--sidebar-width);
     margin-left: 0;
-    margin-right: 250px;
 }
 
-@media (max-width: 991.98px) {
+.sidebar .nav-link.active {
+    border-right: 4px solid #0d6efd;
+    border-left: none;
+}
+
+/* Responsive adjustments for RTL */
+@media (max-width: 992px) {
     .sidebar {
         margin-right: -250px;
-        margin-left: auto;
+        margin-left: 0;
     }
     
     .sidebar.active {
@@ -33,16 +33,11 @@
     
     .main-content.active {
         margin-right: 250px;
-        margin-left: 0;
+        margin-left: -250px;
     }
 }
 
-/* Form RTL Adjustments */
-.form-select {
-    padding: 0.5rem 0.75rem 0.5rem 2.25rem;
-    background-position: left 0.75rem center;
-}
-
+/* Misc RTL adjustments */
 .form-check {
     padding-right: 1.5em;
     padding-left: 0;
@@ -54,19 +49,16 @@
     margin-left: 0;
 }
 
-/* Table RTL Adjustments */
-.table thead th {
+.dropdown-menu {
     text-align: right;
 }
 
-/* Breadcrumb RTL Adjustments */
-.breadcrumb-item + .breadcrumb-item {
-    padding-right: 0.5rem;
-    padding-left: 0;
+.alert-dismissible {
+    padding-right: 1rem;
+    padding-left: 4rem;
 }
 
-.breadcrumb-item + .breadcrumb-item::before {
-    float: right;
-    padding-left: 0.5rem;
-    padding-right: 0;
+.alert-dismissible .btn-close {
+    left: 0;
+    right: auto;
 }
