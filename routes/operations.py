@@ -7,6 +7,7 @@ import string
 from app import db
 from models import Invoice, InvoiceItem, Product, Client, Supplier, Payment, SystemLog
 from forms.operations import PaymentForm, InvoiceForm
+from routes import admin_required
 
 operations_bp = Blueprint('operations', __name__, url_prefix='/operations')
 
