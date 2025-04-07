@@ -43,74 +43,116 @@ def add_new_product():
     app.logger.debug(f"Method: {request.method}")
     
     if request.method == 'POST':
-        app.logger.debug(f"Form data: {request.form}")
-        
-        # Get form data
-        name = request.form.get('name')
-        color = request.form.get('color')
-        material = request.form.get('material')
-        quantity = int(request.form.get('quantity', 0))
-        product_type = request.form.get('type')
-        finishing_cost = float(request.form.get('finishing_cost', 0))
-        printing_cost = float(request.form.get('printing_cost', 0)) if product_type == 'Printed' else 0
-        
-        app.logger.debug(f"Parsed data: {name}, {color}, {material}, {quantity}, {product_type}, {finishing_cost}, {printing_cost}")
-        
-        # Check if product with same name, color, and material exists
-        existing_product = Product.query.filter_by(
-            name=name,
-            color=color,
-            material=material,
-            type=product_type
-        ).first()
-        
-        if existing_product:
-            # Update existing product
-            existing_product.quantity += quantity
-            existing_product.finishing_cost = finishing_cost
+        try:
+            app.logger.debug(f"Form data: {request.form}")
             
+            # Get form data
+            name = request.form.get('name')
+            if not name:
+                flash('اسم المنتج مطلوب', 'danger')
+                return render_template('inventory/add_new.html')
+                
+            color = request.form.get('color')
+            if not color:
+                flash('لون المنتج مطلوب', 'danger')
+                return render_template('inventory/add_new.html')
+                
+            material = request.form.get('material')
+            if not material:
+                flash('مادة المنتج مطلوبة', 'danger')
+                return render_template('inventory/add_new.html')
+            
+            # Convert values with error handling
+            try:
+                quantity = int(request.form.get('quantity', 0))
+            except ValueError:
+                flash('الكمية يجب أن تكون رقم صحيح', 'danger')
+                return render_template('inventory/add_new.html')
+                
+            product_type = request.form.get('type')
+            if not product_type:
+                flash('نوع المنتج مطلوب', 'danger')
+                return render_template('inventory/add_new.html')
+                
+            try:
+                finishing_cost = float(request.form.get('finishing_cost', 0))
+            except ValueError:
+                flash('تكلفة التشطيب يجب أن تكون رقم', 'danger')
+                return render_template('inventory/add_new.html')
+            
+            printing_cost = 0
             if product_type == 'Printed':
-                existing_product.printing_cost = printing_cost
+                try:
+                    printing_cost = float(request.form.get('printing_cost', 0))
+                except ValueError:
+                    flash('تكلفة الطباعة يجب أن تكون رقم', 'danger')
+                    return render_template('inventory/add_new.html')
             
-            # Log the update
-            log = SystemLog(
-                action='product_update',
-                details=f'تحديث المنتج: {existing_product.name} ({existing_product.color})',
-                user_id=current_user.id
-            )
+            app.logger.debug(f"Parsed data: {name}, {color}, {material}, {quantity}, {product_type}, {finishing_cost}, {printing_cost}")
             
-            db.session.add(log)
-            db.session.commit()
-            
-            flash(f'تم تحديث المنتج {existing_product.name} بنجاح', 'success')
-            app.logger.debug(f"Updated product {existing_product.name}")
-        else:
-            # Create new product
-            product = Product(
+            # Check if product with same name, color, and material exists
+            existing_product = Product.query.filter_by(
                 name=name,
                 color=color,
                 material=material,
-                quantity=quantity,
-                type=product_type,
-                finishing_cost=finishing_cost,
-                printing_cost=printing_cost
-            )
+                type=product_type
+            ).first()
             
-            # Log the creation
-            log = SystemLog(
-                action='product_create',
-                details=f'إنشاء منتج جديد: {product.name} ({product.color})',
-                user_id=current_user.id
-            )
+            if existing_product:
+                # Update existing product
+                existing_product.quantity += quantity
+                existing_product.finishing_cost = finishing_cost
+                
+                if product_type == 'Printed':
+                    existing_product.printing_cost = printing_cost
+                
+                # Log the update
+                log = SystemLog(
+                    action='product_update',
+                    details=f'تحديث المنتج: {existing_product.name} ({existing_product.color})',
+                    user_id=current_user.id
+                )
+                
+                db.session.add(log)
+                db.session.commit()
+                
+                flash(f'تم تحديث المنتج {existing_product.name} بنجاح', 'success')
+                app.logger.debug(f"Updated product {existing_product.name}")
+            else:
+                # Create new product
+                product = Product(
+                    name=name,
+                    color=color,
+                    material=material,
+                    quantity=quantity,
+                    type=product_type,
+                    finishing_cost=finishing_cost,
+                    printing_cost=printing_cost
+                )
+                
+                # Log the creation
+                log = SystemLog(
+                    action='product_create',
+                    details=f'إنشاء منتج جديد: {product.name} ({product.color})',
+                    user_id=current_user.id
+                )
+                
+                db.session.add(product)
+                db.session.add(log)
+                db.session.commit()
+                
+                flash(f'تم إضافة المنتج {product.name} بنجاح', 'success')
+                app.logger.debug(f"Added new product {product.name}")
             
-            db.session.add(product)
-            db.session.add(log)
-            db.session.commit()
+            return redirect(url_for('inventory.index'))
             
-            flash(f'تم إضافة المنتج {product.name} بنجاح', 'success')
-            app.logger.debug(f"Added new product {product.name}")
-        
-        return redirect(url_for('inventory.index'))
+        except Exception as e:
+            # Log any errors that occur
+            app.logger.error(f"Error in add_new_product: {str(e)}")
+            import traceback
+            app.logger.error(traceback.format_exc())
+            flash(f'حدث خطأ أثناء إضافة المنتج: {str(e)}', 'danger')
+            return render_template('inventory/add_new.html')
     
     return render_template('inventory/add_new.html')
 
