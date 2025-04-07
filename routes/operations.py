@@ -1,9 +1,12 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, make_response
 from flask_login import login_required, current_user
 from sqlalchemy import desc
 import datetime
 import random
 import string
+import io
+from weasyprint import HTML, CSS
+from weasyprint.text.fonts import FontConfiguration
 
 from app import db
 from models import Invoice, InvoiceItem, Product, Client, Supplier, Payment, SystemLog
@@ -423,3 +426,230 @@ def get_product_details(product_id):
         'type': product.type,
         'quantity': product.quantity
     })
+
+
+@operations_bp.route('/export_invoice_pdf/<int:invoice_id>')
+@login_required
+def export_invoice_pdf(invoice_id):
+    """Export invoice as PDF"""
+    invoice = Invoice.query.get_or_404(invoice_id)
+    
+    # Get related client or supplier
+    client = None
+    supplier = None
+    
+    if invoice.client_id:
+        client = Client.query.get(invoice.client_id)
+    
+    if invoice.supplier_id:
+        supplier = Supplier.query.get(invoice.supplier_id)
+    
+    # Get invoice items with product details
+    items = InvoiceItem.query.filter_by(invoice_id=invoice_id).all()
+    items_with_product = []
+    
+    for item in items:
+        product = Product.query.get(item.product_id)
+        items_with_product.append({
+            'product_name': product.name,
+            'product_color': product.color,
+            'quantity': item.quantity,
+            'unit_price': item.unit_price,
+            'total_price': item.total_price
+        })
+    
+    # Get payments
+    payments = Payment.query.filter_by(invoice_id=invoice_id).order_by(Payment.payment_date).all()
+    
+    # Calculate total paid and remaining
+    total_paid = sum(payment.amount for payment in payments)
+    remaining = invoice.total_amount - total_paid
+    
+    # Create invoice type label in Arabic
+    invoice_type_labels = {
+        'sale': 'فاتورة بيع',
+        'purchase': 'فاتورة شراء',
+        'return': 'مرتجع من عميل',
+        'supplier_return': 'مرتجع إلى مورد'
+    }
+    invoice_type_label = invoice_type_labels.get(invoice.type, 'فاتورة')
+    
+    # Create HTML template for the invoice
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{invoice_type_label} #{invoice.invoice_number}</title>
+        <style>
+            @page {{
+                size: A4;
+                margin: 2cm;
+            }}
+            @font-face {{
+                font-family: 'NotoSansArabic';
+                src: url('https://fonts.gstatic.com/s/notosansarabic/v18/nwpxtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlhQ5l3sQWIHPqzCfyG2vu3CBFQLaig.ttf');
+                font-weight: normal;
+                font-style: normal;
+            }}
+            body {{
+                font-family: 'NotoSansArabic', Arial, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                margin: 0;
+                padding: 0;
+            }}
+            .invoice-header {{
+                text-align: center;
+                padding: 20px 0;
+                border-bottom: 2px solid #ddd;
+            }}
+            .invoice-title {{
+                font-size: 24px;
+                font-weight: bold;
+                margin-bottom: 10px;
+            }}
+            .invoice-number {{
+                font-size: 16px;
+                color: #666;
+            }}
+            .invoice-info {{
+                display: flex;
+                justify-content: space-between;
+                margin: 20px 0;
+            }}
+            .invoice-info-box {{
+                width: 45%;
+            }}
+            .invoice-info-label {{
+                font-weight: bold;
+            }}
+            .invoice-items {{
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+            }}
+            .invoice-items th, .invoice-items td {{
+                border: 1px solid #ddd;
+                padding: 10px;
+                text-align: right;
+            }}
+            .invoice-items th {{
+                background-color: #f5f5f5;
+            }}
+            .invoice-totals {{
+                width: 40%;
+                margin-left: auto;
+                border-collapse: collapse;
+            }}
+            .invoice-totals td {{
+                padding: 8px;
+                border: 1px solid #ddd;
+            }}
+            .invoice-totals .total-row {{
+                font-weight: bold;
+                background-color: #f5f5f5;
+            }}
+            .invoice-footer {{
+                margin-top: 40px;
+                border-top: 1px solid #ddd;
+                padding-top: 20px;
+                text-align: center;
+                font-size: 14px;
+                color: #666;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="invoice-header">
+            <div class="invoice-title">{invoice_type_label}</div>
+            <div class="invoice-number">رقم الفاتورة: {invoice.invoice_number}</div>
+        </div>
+        
+        <div class="invoice-info">
+            <div class="invoice-info-box">
+                <div><span class="invoice-info-label">التاريخ:</span> {invoice.date.strftime('%Y-%m-%d')}</div>
+                <div><span class="invoice-info-label">تاريخ الاستحقاق:</span> {invoice.due_date.strftime('%Y-%m-%d') if invoice.due_date else 'غير محدد'}</div>
+                <div><span class="invoice-info-label">الحالة:</span> {
+                    'مدفوعة بالكامل' if invoice.status == 'paid' else 
+                    'مدفوعة جزئياً' if invoice.status == 'partial' else 
+                    'قيد الانتظار'
+                }</div>
+            </div>
+            <div class="invoice-info-box">
+                <div><span class="invoice-info-label">{'العميل' if invoice.client_id else 'المورد'}:</span> {
+                    client.name if client else 
+                    supplier.name if supplier else 
+                    'غير محدد'
+                }</div>
+                <div><span class="invoice-info-label">رقم الهاتف:</span> {
+                    client.phone if client else 
+                    supplier.phone if supplier else 
+                    'غير محدد'
+                }</div>
+                <div><span class="invoice-info-label">البريد الإلكتروني:</span> {
+                    client.email if client and client.email else 
+                    supplier.email if supplier and supplier.email else 
+                    'غير محدد'
+                }</div>
+            </div>
+        </div>
+        
+        <table class="invoice-items">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>المنتج</th>
+                    <th>اللون</th>
+                    <th>الكمية</th>
+                    <th>سعر الوحدة</th>
+                    <th>الإجمالي</th>
+                </tr>
+            </thead>
+            <tbody>
+                {''.join([
+                    f"<tr><td>{i+1}</td><td>{item['product_name']}</td><td>{item['product_color']}</td><td>{item['quantity']}</td><td>{item['unit_price']:.2f} ج.م</td><td>{item['total_price']:.2f} ج.م</td></tr>"
+                    for i, item in enumerate(items_with_product)
+                ])}
+            </tbody>
+        </table>
+        
+        <table class="invoice-totals">
+            <tr>
+                <td>إجمالي الفاتورة</td>
+                <td>{invoice.total_amount:.2f} ج.م</td>
+            </tr>
+            <tr>
+                <td>إجمالي المدفوع</td>
+                <td>{total_paid:.2f} ج.م</td>
+            </tr>
+            <tr class="total-row">
+                <td>المتبقي</td>
+                <td>{remaining:.2f} ج.م</td>
+            </tr>
+        </table>
+        
+        <div class="invoice-footer">
+            <div>ملاحظات: {invoice.notes if invoice.notes else 'لا توجد'}</div>
+            <div>تم إنشاء هذه الفاتورة بواسطة نظام إدارة مخزون وعمليات الملابس بالجملة</div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    # Configure font
+    font_config = FontConfiguration()
+    
+    # Generate PDF
+    html = HTML(string=html_content)
+    buffer = io.BytesIO()
+    html.write_pdf(buffer, font_config=font_config)
+    buffer.seek(0)
+    
+    # Create response
+    response = make_response(buffer.getvalue())
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename={invoice_type_label}_{invoice.invoice_number}.pdf'
+    
+    return response

@@ -28,13 +28,73 @@
 - PostgreSQL 12+
 - متطلبات Python (انظر pyproject.toml)
 
-## طريقة التثبيت
+## طريقة التثبيت (محلياً)
 
-1. انسخ المستودع
-2. إنشاء البيئة الافتراضية وتثبيت المتطلبات
-3. قم بإعداد متغيرات البيئة
-4. قم بتشغيل الخادم
-5. افتح المتصفح واذهب إلى http://localhost:5000
+1. انسخ المستودع:
+   ```
+   git clone https://github.com/yourusername/clothing-inventory-system.git
+   cd clothing-inventory-system
+   ```
+
+2. إنشاء البيئة الافتراضية وتثبيت المتطلبات:
+   ```
+   python -m venv venv
+   source venv/bin/activate   # على نظام Linux/Mac
+   # أو
+   venv\Scripts\activate      # على نظام Windows
+   
+   pip install -r requirements.txt
+   ```
+
+3. قم بإعداد متغيرات البيئة:
+   قم بإنشاء ملف `.env` بناءً على ملف `.env.example` واضبط المتغيرات المطلوبة.
+
+4. قم بتشغيل الخادم:
+   ```
+   python main.py
+   ```
+
+5. افتح المتصفح واذهب إلى `http://localhost:5000`
+
+## النشر على منصة Railway
+
+1. قم بإنشاء حساب على [Railway](https://railway.app/)
+
+2. قم بتثبيت CLI الخاص بـ Railway:
+   ```
+   npm i -g @railway/cli
+   ```
+
+3. قم بتسجيل الدخول:
+   ```
+   railway login
+   ```
+
+4. قم بإنشاء مشروع جديد:
+   ```
+   railway init
+   ```
+
+5. قم بإضافة قاعدة بيانات PostgreSQL:
+   ```
+   railway add
+   ```
+   واختر "PostgreSQL"
+
+6. قم بضبط متغيرات البيئة:
+   ```
+   railway vars set SESSION_SECRET=your_secret_key_here
+   ```
+
+7. قم بنشر التطبيق:
+   ```
+   railway up
+   ```
+
+8. احصل على عنوان URL للتطبيق:
+   ```
+   railway domain
+   ```
 
 ## تعليمات المساهمة
 
@@ -51,3 +111,16 @@
 ## معلومات الاتصال
 
 للاستفسارات أو الدعم، يرجى التواصل عبر البريد الإلكتروني أو فتح مشكلة في هذا المستودع.
+
+## النشر على منصة Railway
+
+لتشغيل هذا التطبيق على منصة Railway، اتبع الخطوات التالية:
+
+1. قم بإنشاء حساب على موقع Railway
+2. قم بربط مستودع GitHub الخاص بك
+3. قم بإضافة قاعدة بيانات PostgreSQL من خلال واجهة Railway
+4. قم بإضافة المتغيرات البيئية التالية:
+   - SESSION_SECRET: مفتاح سري للجلسات
+   - DATABASE_URL: سيتم تعبئته تلقائيًا بعد إضافة قاعدة البيانات
+
+ملاحظة: لا يمكن استضافة هذا التطبيق على GitHub Pages لأنه يتطلب خادم Python وقاعدة بيانات PostgreSQL، بينما GitHub Pages تدعم فقط مواقع الويب الثابتة.

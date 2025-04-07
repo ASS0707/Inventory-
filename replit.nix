@@ -1,5 +1,9 @@
 {pkgs}: {
   deps = [
+    pkgs.pango
+    pkgs.harfbuzz
+    pkgs.glib
+    pkgs.fontconfig
     pkgs.glibcLocales
     pkgs.tk
     pkgs.tcl

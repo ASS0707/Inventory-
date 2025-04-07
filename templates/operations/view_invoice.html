@@ -36,8 +36,13 @@
                     </a>
                     {% endif %}
                     <button type="button" class="btn btn-primary" onclick="printInvoice()">
-                        <i class="fas fa-print me-1"></i> طباعة
+                        <i class="fas fa-print me-1"></i> طباعة</button>
+                    <a href="{{ url_for('operations.export_invoice_pdf', invoice_id=invoice.id) }}" class="btn btn-danger">
+                        <i class="fas fa-file-pdf me-1"></i> تصدير PDF</a>
                     </button>
+                    <a href="{{ url_for('operations.export_invoice_pdf', invoice_id=invoice.id) }}" class="btn btn-danger">
+                        <i class="fas fa-file-pdf me-1"></i> تصدير PDF
+                    </a>
                 </div>
             </div>
         </div>

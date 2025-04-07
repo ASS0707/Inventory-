@@ -10,3 +10,5 @@ psycopg2-binary>=2.9.5
 routes>=2.5.1
 sqlalchemy>=2.0.0
 werkzeug>=2.2.0
+weasyprint
+weasyprint
