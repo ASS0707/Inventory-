@@ -4,7 +4,7 @@ from sqlalchemy import desc
 import datetime
 from app import db
 from models import Invoice, InvoiceItem, Product, Client, Supplier, Payment, SystemLog
-from forms.operations import PaymentForm
+from forms.operations import PaymentForm, InvoiceForm
 
 operations_bp = Blueprint('operations', __name__, url_prefix='/operations')
 
