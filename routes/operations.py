@@ -69,6 +69,7 @@ def index():
 
 @operations_bp.route('/create_invoice', methods=['GET', 'POST'])
 @login_required
+@admin_required
 def create_invoice():
     form = InvoiceForm()
 
@@ -356,6 +357,7 @@ def edit_invoice(invoice_id):
 
 @operations_bp.route('/add_payment/<int:invoice_id>', methods=['GET', 'POST'])
 @login_required
+@admin_required
 def add_payment(invoice_id):
     invoice = Invoice.query.get_or_404(invoice_id)
     form = PaymentForm()

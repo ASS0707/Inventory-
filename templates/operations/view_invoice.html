@@ -30,7 +30,7 @@
                     <a href="{{ url_for('operations.edit_invoice', invoice_id=invoice.id) }}" class="btn btn-warning">
                         <i class="fas fa-edit me-1"></i> تعديل الفاتورة
                     </a>
-                    {% if invoice.status != 'paid' %}
+                    {% if invoice.status != 'paid' and current_user.role == 'admin' %}
                     <a href="{{ url_for('operations.add_payment', invoice_id=invoice.id) }}" class="btn btn-success">
                         <i class="fas fa-money-bill-wave me-1"></i> إضافة دفعة
                     </a>
@@ -297,7 +297,7 @@
     function printInvoice() {
         const printContents = document.getElementById('printSection').innerHTML;
         const originalContents = document.body.innerHTML;
-        
+
         // Add print styles
         const printStyles = `
             <style>
@@ -319,7 +319,7 @@
                 }
             </style>
         `;
-        
+
         // Create header with invoice information
         const invoiceHeader = `
             <div style="text-align: center; margin-bottom: 20px;">
@@ -328,7 +328,7 @@
                 <p>تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</p>
             </div>
         `;
-        
+
         document.body.innerHTML = printStyles + invoiceHeader + printContents;
         window.print();
         document.body.innerHTML = originalContents;
