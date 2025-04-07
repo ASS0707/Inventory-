@@ -403,26 +403,40 @@ def add_payment(invoice_id):
                 flash(f'مبلغ الدفع ({payment.amount} ج.م) غير صالح. يجب أن يكون أكبر من 0 وأقل من أو يساوي المبلغ المتبقي ({remaining} ج.م)', 'danger')
                 return redirect(url_for('operations.add_payment', invoice_id=invoice_id))
             
+            # Store original amount for verification
+            original_amount = form.amount.data
+            
+            # Validate amount doesn't exceed remaining balance
+            remaining = invoice.calculate_remaining_amount()
+            if original_amount > remaining:
+                raise ValueError(f"Payment amount ({original_amount} ج.م) exceeds remaining balance ({remaining} ج.م)")
+            
             # Round amount to 2 decimal places to avoid floating point issues
-            payment.amount = round(payment.amount, 2)
+            payment.amount = round(original_amount, 2)
+            
+            try:
+                db.session.add(payment)
+                db.session.add(log)
+                db.session.flush()  # Flush to get payment ID without committing
                 
-            db.session.add(payment)
-            db.session.add(log)
-            
-            # Update invoice status
-            invoice.update_status()
-            db.session.commit()
-            
-            # Verify the payment was recorded correctly
-            db.session.refresh(payment)
-            if abs(payment.amount - form.amount.data) > 0.01:
-                raise ValueError("Payment amount mismatch detected")
+                # Verify the payment was recorded correctly
+                recorded_payment = Payment.query.get(payment.id)
+                if abs(recorded_payment.amount - original_amount) > 0.01:
+                    raise ValueError(f"Payment amount mismatch detected. Expected: {original_amount} ج.م, Got: {recorded_payment.amount} ج.م")
+                
+                # If verification passes, update invoice status and commit
+                invoice.update_status()
+                db.session.commit()
             
             flash(f'تم إضافة الدفعة بمبلغ {payment.amount} ج.م بنجاح', 'success')
             return redirect(url_for('operations.view_invoice', invoice_id=invoice_id))
+        except ValueError as e:
+            db.session.rollback()
+            flash(str(e), 'danger')
+            return redirect(url_for('operations.add_payment', invoice_id=invoice_id))
         except Exception as e:
             db.session.rollback()
-            flash('حدث خطأ أثناء معالجة الدفعة. يرجى التحقق من تفاصيل الدفع أو المحاولة مرة أخرى.', 'danger')
+            flash(f'خطأ في معالجة الدفعة: {str(e)}', 'danger')
             return redirect(url_for('operations.add_payment', invoice_id=invoice_id))
     
     return render_template(
