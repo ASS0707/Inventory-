@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from sqlalchemy import desc
 
-from app import db
+from app import db, app
 from models import Product, SystemLog
 from forms.inventory import ProductForm
 
@@ -42,8 +42,16 @@ def index():
 @login_required
 def add():
     form = ProductForm()
+    app.logger.debug(f"Request method: {request.method}")
+    
+    if request.method == 'POST':
+        app.logger.debug(f"Form data: {request.form}")
+        app.logger.debug(f"Form validation: {form.validate()}")
+        if not form.validate():
+            app.logger.debug(f"Form errors: {form.errors}")
     
     if form.validate_on_submit():
+        app.logger.debug("Form validated successfully")
         # Check if product with same name, color, and material exists
         existing_product = Product.query.filter_by(
             name=form.name.data,
@@ -71,6 +79,7 @@ def add():
             db.session.commit()
             
             flash(f'تم تحديث المنتج {existing_product.name} بنجاح', 'success')
+            app.logger.debug(f"Updated product {existing_product.name}")
         else:
             # Create new product
             product = Product(
@@ -95,6 +104,7 @@ def add():
             db.session.commit()
             
             flash(f'تم إضافة المنتج {product.name} بنجاح', 'success')
+            app.logger.debug(f"Added new product {product.name}")
         
         return redirect(url_for('inventory.index'))
     
