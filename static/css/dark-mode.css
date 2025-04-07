@@ -1,9 +1,16 @@
 
 /* Dark Mode Styles */
 
-body.dark-mode {
+body.dark-mode,
+.dark-mode input,
+.dark-mode select,
+.dark-mode textarea,
+.dark-mode .card,
+.dark-mode .modal,
+.dark-mode .dropdown-menu,
+.dark-mode .alert {
     background-color: #121212;
-    color: #f8f9fa;
+    color: #f8f9fa !important;
 }
 
 .dark-mode .card {
@@ -104,4 +111,18 @@ body.dark-mode {
 .dark-mode .dropdown-item:hover {
     background-color: #2c2c2c;
     color: #f8f9fa;
+}
+
+.dark-mode h1,
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode h4,
+.dark-mode h5,
+.dark-mode h6,
+.dark-mode p,
+.dark-mode span,
+.dark-mode a,
+.dark-mode label,
+.dark-mode .nav-link {
+    color: #f8f9fa !important;
 }
