@@ -13,3 +13,5 @@ werkzeug>=2.2.0
 weasyprint
 weasyprint
 python-dotenv
+python-dotenv>=0.21.0
+weasyprint>=54.0
