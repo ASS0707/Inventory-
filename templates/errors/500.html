@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}خطأ في الخادم | نظام إدارة مبيعات الملابس{% endblock %}
+
+{% block content %}
+<div class="container mt-5 text-center">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="display-1">500</h1>
+                    <h2 class="mb-4">خطأ في الخادم</h2>
+                    <p class="lead">عذراً، حدث خطأ أثناء معالجة طلبك. الرجاء المحاولة مرة أخرى لاحقاً.</p>
+                    <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">
+                        <i class="fas fa-home"></i> العودة للصفحة الرئيسية
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

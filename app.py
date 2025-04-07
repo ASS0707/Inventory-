@@ -108,3 +108,47 @@ def format_arabic_date(date):
         return ""
     # Could be enhanced with Arabic month names
     return date.strftime("%Y/%m/%d")
+
+
+# Root route for the website
+@app.route('/')
+def index():
+    """Redirect to dashboard or login page"""
+    from flask import redirect, url_for
+    from flask_login import current_user
+    
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard.index'))
+    else:
+        return redirect(url_for('auth.login'))
+
+
+# Serve robots.txt
+@app.route('/robots.txt')
+def robots():
+    """Serve robots.txt file"""
+    from flask import send_from_directory
+    return send_from_directory(app.static_folder, 'robots.txt')
+
+
+# Serve sitemap.xml
+@app.route('/sitemap.xml')
+def sitemap():
+    """Serve sitemap.xml file"""
+    from flask import send_from_directory
+    return send_from_directory(app.static_folder, 'sitemap.xml')
+
+
+# Error handlers
+@app.errorhandler(404)
+def page_not_found(e):
+    """Handle 404 errors"""
+    from flask import render_template
+    return render_template('errors/404.html'), 404
+
+
+@app.errorhandler(500)
+def server_error(e):
+    """Handle 500 errors"""
+    from flask import render_template
+    return render_template('errors/500.html'), 500
