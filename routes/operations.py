@@ -448,6 +448,26 @@ def get_product_details(product_id):
     })
 
 
+@operations_bp.route('/delete_invoice/<int:invoice_id>', methods=['POST'])
+@login_required
+@admin_required
+def delete_invoice(invoice_id):
+    invoice = Invoice.query.get_or_404(invoice_id)
+    
+    # Log the deletion
+    log = SystemLog(
+        action='invoice_delete',
+        details=f'حذف الفاتورة: {invoice.invoice_number}',
+        user_id=current_user.id
+    )
+    
+    db.session.add(log)
+    db.session.delete(invoice)
+    db.session.commit()
+    
+    flash('تم حذف الفاتورة بنجاح', 'success')
+    return redirect(url_for('operations.index'))
+
 @operations_bp.route('/export_invoice_pdf/<int:invoice_id>')
 @login_required
 def export_invoice_pdf(invoice_id):

@@ -122,6 +122,26 @@ def edit(client_id):
     return render_template('clients/edit.html', form=form, client=client)
 
 
+@clients_bp.route('/delete/<int:client_id>', methods=['POST'])
+@login_required
+@admin_required
+def delete(client_id):
+    client = Client.query.get_or_404(client_id)
+    
+    # Log the deletion
+    log = SystemLog(
+        action='client_delete',
+        details=f'حذف العميل: {client.name}',
+        user_id=current_user.id
+    )
+    
+    db.session.add(log)
+    db.session.delete(client)
+    db.session.commit()
+    
+    flash('تم حذف العميل بنجاح', 'success')
+    return redirect(url_for('clients.index'))
+
 @clients_bp.route('/add_payment/<int:client_id>', methods=['GET', 'POST'])
 @login_required
 def add_payment(client_id):

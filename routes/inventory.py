@@ -250,6 +250,26 @@ def view(product_id):
     return render_template('inventory/view.html', product=product, invoices=invoices)
 
 
+@inventory_bp.route('/delete/<int:product_id>', methods=['POST'])
+@login_required
+@admin_required
+def delete(product_id):
+    product = Product.query.get_or_404(product_id)
+    
+    # Log the deletion
+    log = SystemLog(
+        action='product_delete',
+        details=f'حذف المنتج: {product.name} ({product.color})',
+        user_id=current_user.id
+    )
+    
+    db.session.add(log)
+    db.session.delete(product)
+    db.session.commit()
+    
+    flash('تم حذف المنتج بنجاح', 'success')
+    return redirect(url_for('inventory.index'))
+
 @inventory_bp.route('/edit/<int:product_id>', methods=['GET', 'POST'])
 @login_required
 def edit(product_id):
