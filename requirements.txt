@@ -12,3 +12,4 @@ sqlalchemy>=2.0.0
 werkzeug>=2.2.0
 weasyprint
 weasyprint
+python-dotenv

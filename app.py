@@ -23,12 +23,24 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "devkey-changeme-in-production")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
+# Load environment variables from .env file if present (for local development)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # Load environment variables from .env file
+    app.logger.info("Loaded environment variables from .env file")
+except ImportError:
+    app.logger.warning("python-dotenv not installed, skipping .env loading")
+
 # Configure the database
 database_url = os.environ.get("DATABASE_URL")
+app.logger.info(f"Initial DATABASE_URL: {database_url if database_url else 'Not set'}")
+
 # Fix Railway PostgreSQL connection string format if needed
 if database_url and database_url.startswith('postgres://'):
     database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.logger.info(f"Fixed PostgreSQL URL format: {database_url}")
 
+# Set the database URI
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
@@ -36,11 +48,25 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# Add additional error handling
+# Handle missing DATABASE_URL for development/testing
 if not database_url:
-    app.logger.error("DATABASE_URL environment variable is not set! Application may not function correctly.")
-    # Set a fallback SQLite database for development environments only
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///fallback.db"
+    app.logger.warning("DATABASE_URL environment variable is not set!")
+    # For Railway deployment compatibility
+    pg_host = os.environ.get("PGHOST")
+    pg_user = os.environ.get("PGUSER")
+    pg_password = os.environ.get("PGPASSWORD")
+    pg_database = os.environ.get("PGDATABASE")
+    pg_port = os.environ.get("PGPORT")
+    
+    if all([pg_host, pg_user, pg_password, pg_database, pg_port]):
+        # Construct URI from individual components
+        constructed_uri = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_database}"
+        app.logger.info(f"Constructed DATABASE_URL from individual components: {constructed_uri}")
+        app.config["SQLALCHEMY_DATABASE_URI"] = constructed_uri
+    else:
+        # Fall back to SQLite for development only
+        app.logger.warning("No PostgreSQL configuration found. Using SQLite fallback (DEV ONLY).")
+        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///fallback.db"
 
 # Initialize the extension
 db.init_app(app)

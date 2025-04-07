@@ -1,0 +1,19 @@
+[environments]
+  production = "production"
+  deploy = "deploy"
+
+[phases.production]
+  cmds = ["python -m gunicorn main:app --bind 0.0.0.0:$PORT"]
+
+[phases.deploy]
+  cmds = ["python -m gunicorn main:app --bind 0.0.0.0:$PORT"]
+
+[build]
+  builder = "nixpacks"
+  buildCommand = "pip install -r requirements.txt"
+
+[deploy]
+  healthcheckPath = "/"
+  healthcheckTimeout = 100
+  restartPolicyType = "ON_FAILURE"
+  restartPolicyMaxRetries = 5
