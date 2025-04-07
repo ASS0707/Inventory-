@@ -34,6 +34,7 @@ def index():
 
 @clients_bp.route('/add', methods=['GET', 'POST'])
 @login_required
+@admin_required
 def add():
     form = ClientForm()
     

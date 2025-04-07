@@ -39,6 +39,7 @@ def index():
 
 @inventory_bp.route('/add-new-product', methods=['GET', 'POST'])
 @login_required
+@admin_required
 def add_new_product():
     app.logger.debug(f"Method: {request.method}")
     
