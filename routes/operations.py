@@ -114,8 +114,15 @@ def create_invoice():
             db.session.add(invoice)
             db.session.flush()  # Get the ID of the invoice
             
-            # Process invoice items from JSON data
-            items_data = request.json.get('items', [])
+            # Process invoice items from form data (JSON string)
+            items_json = request.form.get('itemsJson', '[]')
+            try:
+                import json
+                items_data = json.loads(items_json)
+            except Exception as e:
+                flash(f'خطأ في قراءة بيانات الأصناف: {str(e)}', 'danger')
+                return render_template('operations/create_invoice.html', form=form, products=Product.query.all())
+                
             total_amount = 0
             
             for item_data in items_data:
@@ -253,8 +260,14 @@ def edit_invoice(invoice_id):
                 invoice.supplier_id = form.supplier_id.data
                 invoice.client_id = None
             
-            # Process invoice items from JSON data
-            items_data = request.json.get('items', [])
+            # Process invoice items from form data (JSON string)
+            items_json = request.form.get('itemsJson', '[]')
+            try:
+                import json
+                items_data = json.loads(items_json)
+            except Exception as e:
+                flash(f'خطأ في قراءة بيانات الأصناف: {str(e)}', 'danger')
+                return render_template('operations/edit_invoice.html', form=form, invoice=invoice, items=[], products=Product.query.all())
             
             # Get old items for inventory adjustment
             old_items = InvoiceItem.query.filter_by(invoice_id=invoice.id).all()
