@@ -21,48 +21,48 @@ def index():
     # Get all operations with pagination
     page = request.args.get('page', 1, type=int)
     per_page = 20
-    
+
     # Filter parameters
     type_filter = request.args.get('type', '')
     date_from = request.args.get('date_from', '')
     date_to = request.args.get('date_to', '')
     client_id = request.args.get('client_id', '')
     supplier_id = request.args.get('supplier_id', '')
-    
+
     # Base query
     query = Invoice.query
-    
+
     # Apply filters if provided
     if type_filter:
         query = query.filter(Invoice.type == type_filter)
-    
+
     if date_from:
         try:
             from_date = datetime.datetime.strptime(date_from, '%Y-%m-%d')
             query = query.filter(Invoice.date >= from_date)
         except ValueError:
             flash('صيغة تاريخ البداية غير صالحة', 'warning')
-    
+
     if date_to:
         try:
             to_date = datetime.datetime.strptime(date_to, '%Y-%m-%d')
             query = query.filter(Invoice.date <= to_date)
         except ValueError:
             flash('صيغة تاريخ النهاية غير صالحة', 'warning')
-    
+
     if client_id:
         query = query.filter(Invoice.client_id == client_id)
-    
+
     if supplier_id:
         query = query.filter(Invoice.supplier_id == supplier_id)
-    
+
     # Execute query with pagination
     operations = query.order_by(desc(Invoice.date)).paginate(page=page, per_page=per_page)
-    
+
     # Get clients and suppliers for filters
     clients = Client.query.order_by(Client.name).all()
     suppliers = Supplier.query.order_by(Supplier.name).all()
-    
+
     return render_template(
         'operations/index.html',
         operations=operations,
@@ -75,16 +75,16 @@ def index():
 @login_required
 def create_invoice():
     form = InvoiceForm()
-    
+
     # Populate client and supplier choices
     form.client_id.choices = [(0, 'اختر العميل...')] + [(c.id, c.name) for c in Client.query.order_by(Client.name).all()]
     form.supplier_id.choices = [(0, 'اختر المورد...')] + [(s.id, s.name) for s in Supplier.query.order_by(Supplier.name).all()]
-    
+
     # Generate invoice number
     today = datetime.datetime.now().strftime('%Y%m%d')
     random_part = ''.join(random.choices(string.digits, k=4))
     form.invoice_number.data = f"INV-{today}-{random_part}"
-    
+
     if request.method == 'POST':
         # Validate the form
         if form.validate():
@@ -98,25 +98,25 @@ def create_invoice():
                 status='pending',
                 created_by=current_user.id
             )
-            
+
             # Set client or supplier based on invoice type
             if form.type.data in ['sale', 'return']:
                 if form.client_id.data == 0:
                     flash('يجب اختيار عميل لهذا النوع من الفواتير', 'danger')
                     return render_template('operations/create_invoice.html', form=form)
-                
+
                 invoice.client_id = form.client_id.data
             elif form.type.data in ['purchase', 'supplier_return']:
                 if form.supplier_id.data == 0:
                     flash('يجب اختيار مورد لهذا النوع من الفواتير', 'danger')
                     return render_template('operations/create_invoice.html', form=form)
-                
+
                 invoice.supplier_id = form.supplier_id.data
-            
+
             # Save the invoice
             db.session.add(invoice)
             db.session.flush()  # Get the ID of the invoice
-            
+
             # Process invoice items from form data (JSON string)
             items_json = request.form.get('itemsJson', '[]')
             try:
@@ -125,15 +125,15 @@ def create_invoice():
             except Exception as e:
                 flash(f'خطأ في قراءة بيانات الأصناف: {str(e)}', 'danger')
                 return render_template('operations/create_invoice.html', form=form, products=Product.query.all())
-                
+
             total_amount = 0
-            
+
             for item_data in items_data:
                 product_id = int(item_data['product_id'])
                 quantity = int(item_data['quantity'])
                 unit_price = float(item_data['unit_price'])
                 total_price = quantity * unit_price
-                
+
                 # Create the invoice item
                 item = InvoiceItem(
                     invoice_id=invoice.id,
@@ -142,13 +142,13 @@ def create_invoice():
                     unit_price=unit_price,
                     total_price=total_price
                 )
-                
+
                 db.session.add(item)
                 total_amount += total_price
-                
+
                 # Update product quantity based on operation type
                 product = Product.query.get(product_id)
-                
+
                 if form.type.data == 'sale':
                     product.quantity -= quantity
                 elif form.type.data == 'purchase':
@@ -157,10 +157,10 @@ def create_invoice():
                     product.quantity += quantity
                 elif form.type.data == 'supplier_return':
                     product.quantity -= quantity
-            
+
             # Update invoice total
             invoice.total_amount = total_amount
-            
+
             # Log the operation
             action = {
                 'sale': 'فاتورة بيع',
@@ -168,22 +168,22 @@ def create_invoice():
                 'return': 'مرتجع من عميل',
                 'supplier_return': 'مرتجع إلى مورد'
             }[form.type.data]
-            
+
             log = SystemLog(
                 action=f'invoice_{form.type.data}',
                 details=f'إنشاء {action}: {invoice.invoice_number} بقيمة {total_amount} ج.م',
                 user_id=current_user.id
             )
-            
+
             db.session.add(log)
             db.session.commit()
-            
+
             flash(f'تم إنشاء الفاتورة {invoice.invoice_number} بنجاح', 'success')
             return redirect(url_for('operations.view_invoice', invoice_id=invoice.id))
-    
+
     # Get all products for the item form
     products = Product.query.all()
-    
+
     return render_template(
         'operations/create_invoice.html',
         form=form,
@@ -195,27 +195,27 @@ def create_invoice():
 @login_required
 def view_invoice(invoice_id):
     invoice = Invoice.query.get_or_404(invoice_id)
-    
+
     # Get related client or supplier
     client = None
     supplier = None
-    
+
     if invoice.client_id:
         client = Client.query.get(invoice.client_id)
-    
+
     if invoice.supplier_id:
         supplier = Supplier.query.get(invoice.supplier_id)
-    
+
     # Get invoice items
     items = InvoiceItem.query.filter_by(invoice_id=invoice_id).all()
-    
+
     # Get payments
     payments = Payment.query.filter_by(invoice_id=invoice_id).order_by(Payment.payment_date).all()
-    
+
     # Calculate total paid and remaining
     total_paid = sum(payment.amount for payment in payments)
     remaining = invoice.total_amount - total_paid
-    
+
     return render_template(
         'operations/view_invoice.html',
         invoice=invoice,
@@ -233,11 +233,11 @@ def view_invoice(invoice_id):
 def edit_invoice(invoice_id):
     invoice = Invoice.query.get_or_404(invoice_id)
     form = InvoiceForm(obj=invoice)
-    
+
     # Populate client and supplier choices
     form.client_id.choices = [(0, 'اختر العميل...')] + [(c.id, c.name) for c in Client.query.order_by(Client.name).all()]
     form.supplier_id.choices = [(0, 'اختر المورد...')] + [(s.id, s.name) for s in Supplier.query.order_by(Supplier.name).all()]
-    
+
     if request.method == 'POST':
         # Validate the form
         if form.validate():
@@ -246,23 +246,23 @@ def edit_invoice(invoice_id):
             invoice.date = form.date.data
             invoice.due_date = form.due_date.data
             invoice.notes = form.notes.data
-            
+
             # Set client or supplier based on invoice type
             if form.type.data in ['sale', 'return']:
                 if form.client_id.data == 0:
                     flash('يجب اختيار عميل لهذا النوع من الفواتير', 'danger')
                     return render_template('operations/edit_invoice.html', form=form, invoice=invoice)
-                
+
                 invoice.client_id = form.client_id.data
                 invoice.supplier_id = None
             elif form.type.data in ['purchase', 'supplier_return']:
                 if form.supplier_id.data == 0:
                     flash('يجب اختيار مورد لهذا النوع من الفواتير', 'danger')
                     return render_template('operations/edit_invoice.html', form=form, invoice=invoice)
-                
+
                 invoice.supplier_id = form.supplier_id.data
                 invoice.client_id = None
-            
+
             # Process invoice items from form data (JSON string)
             items_json = request.form.get('itemsJson', '[]')
             try:
@@ -271,14 +271,14 @@ def edit_invoice(invoice_id):
             except Exception as e:
                 flash(f'خطأ في قراءة بيانات الأصناف: {str(e)}', 'danger')
                 return render_template('operations/edit_invoice.html', form=form, invoice=invoice, items=[], products=Product.query.all())
-            
+
             # Get old items for inventory adjustment
             old_items = InvoiceItem.query.filter_by(invoice_id=invoice.id).all()
-            
+
             # Remove old items and adjust inventory
             for item in old_items:
                 product = Product.query.get(item.product_id)
-                
+
                 # Reverse the previous quantity change
                 if invoice.type == 'sale':
                     product.quantity += item.quantity
@@ -288,18 +288,18 @@ def edit_invoice(invoice_id):
                     product.quantity -= item.quantity
                 elif invoice.type == 'supplier_return':
                     product.quantity += item.quantity
-                
+
                 db.session.delete(item)
-            
+
             # Add new items and adjust inventory
             total_amount = 0
-            
+
             for item_data in items_data:
                 product_id = int(item_data['product_id'])
                 quantity = int(item_data['quantity'])
                 unit_price = float(item_data['unit_price'])
                 total_price = quantity * unit_price
-                
+
                 # Create the invoice item
                 item = InvoiceItem(
                     invoice_id=invoice.id,
@@ -308,13 +308,13 @@ def edit_invoice(invoice_id):
                     unit_price=unit_price,
                     total_price=total_price
                 )
-                
+
                 db.session.add(item)
                 total_amount += total_price
-                
+
                 # Update product quantity based on operation type
                 product = Product.query.get(product_id)
-                
+
                 if form.type.data == 'sale':
                     product.quantity -= quantity
                 elif form.type.data == 'purchase':
@@ -323,32 +323,32 @@ def edit_invoice(invoice_id):
                     product.quantity += quantity
                 elif form.type.data == 'supplier_return':
                     product.quantity -= quantity
-            
+
             # Update invoice total
             invoice.total_amount = total_amount
-            
+
             # Update invoice status
             invoice.update_status()
-            
+
             # Log the operation
             log = SystemLog(
                 action=f'invoice_edit',
                 details=f'تعديل فاتورة: {invoice.invoice_number}',
                 user_id=current_user.id
             )
-            
+
             db.session.add(log)
             db.session.commit()
-            
+
             flash(f'تم تحديث الفاتورة {invoice.invoice_number} بنجاح', 'success')
             return redirect(url_for('operations.view_invoice', invoice_id=invoice.id))
-    
+
     # Get existing items
     items = InvoiceItem.query.filter_by(invoice_id=invoice_id).all()
-    
+
     # Get all products for the item form
     products = Product.query.all()
-    
+
     return render_template(
         'operations/edit_invoice.html',
         form=form,
@@ -363,14 +363,14 @@ def edit_invoice(invoice_id):
 def add_payment(invoice_id):
     invoice = Invoice.query.get_or_404(invoice_id)
     form = PaymentForm()
-    
+
     # Clear the existing choices and just use the linked invoice
     form.invoice_id.data = invoice_id
-    
+
     # Set default values
     form.amount.data = invoice.calculate_remaining_amount()
     form.payment_date.data = datetime.datetime.now()
-    
+
     if form.validate_on_submit():
         payment = Payment(
             invoice_id=invoice_id,
@@ -381,13 +381,13 @@ def add_payment(invoice_id):
             notes=form.notes.data,
             created_by=current_user.id
         )
-        
+
         # Set client or supplier based on invoice type
         if invoice.type in ['sale', 'return']:
             payment.client_id = invoice.client_id
         elif invoice.type in ['purchase', 'supplier_return']:
             payment.supplier_id = invoice.supplier_id
-        
+
         # Log the payment
         entity_name = Client.query.get(invoice.client_id).name if invoice.client_id else Supplier.query.get(invoice.supplier_id).name
         log = SystemLog(
@@ -395,39 +395,38 @@ def add_payment(invoice_id):
             details=f'إضافة دفعة للفاتورة {invoice.invoice_number} ({entity_name}): {payment.amount} ج.م',
             user_id=current_user.id
         )
-        
+
         try:
             # Validate payment amount
             remaining = invoice.calculate_remaining_amount()
             if not 0 < payment.amount <= remaining:
                 flash(f'مبلغ الدفع ({payment.amount} ج.م) غير صالح. يجب أن يكون أكبر من 0 وأقل من أو يساوي المبلغ المتبقي ({remaining} ج.م)', 'danger')
                 return redirect(url_for('operations.add_payment', invoice_id=invoice_id))
-            
+
             # Store original amount for verification
             original_amount = form.amount.data
-            
+
             # Validate amount doesn't exceed remaining balance
             remaining = invoice.calculate_remaining_amount()
             if original_amount > remaining:
                 raise ValueError(f"Payment amount ({original_amount} ج.م) exceeds remaining balance ({remaining} ج.م)")
-            
+
             # Round amount to 2 decimal places to avoid floating point issues
             payment.amount = round(original_amount, 2)
-            
-            try:
-                db.session.add(payment)
-                db.session.add(log)
-                db.session.flush()  # Flush to get payment ID without committing
-                
-                # Verify the payment was recorded correctly
-                recorded_payment = Payment.query.get(payment.id)
-                if abs(recorded_payment.amount - original_amount) > 0.01:
-                    raise ValueError(f"Payment amount mismatch detected. Expected: {original_amount} ج.م, Got: {recorded_payment.amount} ج.م")
-                
-                # If verification passes, update invoice status and commit
-                invoice.update_status()
-                db.session.commit()
-            
+
+            db.session.add(payment)
+            db.session.add(log)
+            db.session.flush()  # Flush to get payment ID without committing
+
+            # Verify the payment was recorded correctly
+            recorded_payment = Payment.query.get(payment.id)
+            if abs(recorded_payment.amount - original_amount) > 0.01:
+                raise ValueError(f"Payment amount mismatch detected. Expected: {original_amount} ج.م, Got: {recorded_payment.amount} ج.م")
+
+            # If verification passes, update invoice status and commit
+            invoice.update_status()
+            db.session.commit()
+
             flash(f'تم إضافة الدفعة بمبلغ {payment.amount} ج.م بنجاح', 'success')
             return redirect(url_for('operations.view_invoice', invoice_id=invoice_id))
         except ValueError as e:
@@ -438,7 +437,7 @@ def add_payment(invoice_id):
             db.session.rollback()
             flash(f'خطأ في معالجة الدفعة: {str(e)}', 'danger')
             return redirect(url_for('operations.add_payment', invoice_id=invoice_id))
-    
+
     return render_template(
         'operations/add_payment.html',
         form=form,
@@ -450,7 +449,7 @@ def add_payment(invoice_id):
 @login_required
 def get_product_details(product_id):
     product = Product.query.get_or_404(product_id)
-    
+
     return jsonify({
         'id': product.id,
         'name': product.name,
@@ -466,21 +465,21 @@ def get_product_details(product_id):
 def export_invoice_pdf(invoice_id):
     """Export invoice as PDF"""
     invoice = Invoice.query.get_or_404(invoice_id)
-    
+
     # Get related client or supplier
     client = None
     supplier = None
-    
+
     if invoice.client_id:
         client = Client.query.get(invoice.client_id)
-    
+
     if invoice.supplier_id:
         supplier = Supplier.query.get(invoice.supplier_id)
-    
+
     # Get invoice items with product details
     items = InvoiceItem.query.filter_by(invoice_id=invoice_id).all()
     items_with_product = []
-    
+
     for item in items:
         product = Product.query.get(item.product_id)
         items_with_product.append({
@@ -490,14 +489,14 @@ def export_invoice_pdf(invoice_id):
             'unit_price': item.unit_price,
             'total_price': item.total_price
         })
-    
+
     # Get payments
     payments = Payment.query.filter_by(invoice_id=invoice_id).order_by(Payment.payment_date).all()
-    
+
     # Calculate total paid and remaining
     total_paid = sum(payment.amount for payment in payments)
     remaining = invoice.total_amount - total_paid
-    
+
     # Create invoice type label in Arabic
     invoice_type_labels = {
         'sale': 'فاتورة بيع',
@@ -506,7 +505,7 @@ def export_invoice_pdf(invoice_id):
         'supplier_return': 'مرتجع إلى مورد'
     }
     invoice_type_label = invoice_type_labels.get(invoice.type, 'فاتورة')
-    
+
     # Create HTML template for the invoice
     html_content = f"""
     <!DOCTYPE html>
@@ -599,7 +598,7 @@ def export_invoice_pdf(invoice_id):
             <div class="invoice-title">{invoice_type_label}</div>
             <div class="invoice-number">رقم الفاتورة: {invoice.invoice_number}</div>
         </div>
-        
+
         <div class="invoice-info">
             <div class="invoice-info-box">
                 <div><span class="invoice-info-label">التاريخ:</span> {invoice.date.strftime('%Y-%m-%d')}</div>
@@ -628,7 +627,7 @@ def export_invoice_pdf(invoice_id):
                 }</div>
             </div>
         </div>
-        
+
         <table class="invoice-items">
             <thead>
                 <tr>
@@ -647,7 +646,7 @@ def export_invoice_pdf(invoice_id):
                 ])}
             </tbody>
         </table>
-        
+
         <table class="invoice-totals">
             <tr>
                 <td>إجمالي الفاتورة</td>
@@ -662,7 +661,7 @@ def export_invoice_pdf(invoice_id):
                 <td>{remaining:.2f} ج.م</td>
             </tr>
         </table>
-        
+
         <div class="invoice-footer">
             <div>ملاحظات: {invoice.notes if invoice.notes else 'لا توجد'}</div>
             <div>تم إنشاء هذه الفاتورة بواسطة نظام إدارة مخزون وعمليات الملابس بالجملة</div>
@@ -670,19 +669,19 @@ def export_invoice_pdf(invoice_id):
     </body>
     </html>
     """
-    
+
     # Configure font
     font_config = FontConfiguration()
-    
+
     # Generate PDF
     html = HTML(string=html_content)
     buffer = io.BytesIO()
     html.write_pdf(buffer, font_config=font_config)
     buffer.seek(0)
-    
+
     # Create response
     response = make_response(buffer.getvalue())
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'attachment; filename={invoice_type_label}_{invoice.invoice_number}.pdf'
-    
+
     return response
