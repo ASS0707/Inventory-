@@ -139,6 +139,30 @@ def sitemap():
     return send_from_directory(app.static_folder, 'sitemap.xml')
 
 
+# Serve static index.html file for web servers that look for index.html
+@app.route('/index.html')
+def static_index():
+    """Serve the static index.html file"""
+    from flask import send_from_directory
+    return send_from_directory(app.static_folder, 'index.html')
+
+
+# Direct index page for visitors accessing /index directly
+@app.route('/direct_index')
+def direct_index():
+    """Render the direct index page for /index path requests"""
+    from flask import render_template
+    return render_template('direct_index.html')
+
+
+# Handle /index route
+@app.route('/index')
+def index_page():
+    """Handle requests to /index path"""
+    from flask import render_template
+    return render_template('direct_index.html')
+
+
 # Error handlers
 @app.errorhandler(404)
 def page_not_found(e):
