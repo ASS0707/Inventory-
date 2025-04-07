@@ -1,0 +1,81 @@
+
+{% extends 'base.html' %}
+
+{% block title %}تعديل المستخدم - نظام إدارة مبيعات الملابس{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('admin.users') }}">إدارة المستخدمين</a></li>
+<li class="breadcrumb-item active">تعديل المستخدم</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">تعديل بيانات المستخدم: {{ user.username }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="username" class="form-label">اسم المستخدم <span class="text-danger">*</span></label>
+                        {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else ""), placeholder="أدخل اسم المستخدم") }}
+                        {% if form.username.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.username.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">البريد الإلكتروني <span class="text-danger">*</span></label>
+                        {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="أدخل البريد الإلكتروني") }}
+                        {% if form.email.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.email.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">كلمة المرور</label>
+                        {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="أدخل كلمة المرور") }}
+                        <div class="form-text">اتركها فارغة إذا لم ترد تغيير كلمة المرور</div>
+                        {% if form.password.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.password.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="role" class="form-label">الصلاحيات <span class="text-danger">*</span></label>
+                        {{ form.role(class="form-control" + (" is-invalid" if form.role.errors else "")) }}
+                        {% if form.role.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.role.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('admin.users') }}" class="btn btn-light me-md-2">إلغاء</a>
+                        {{ form.submit(class="btn btn-warning") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
