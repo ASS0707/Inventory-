@@ -397,6 +397,12 @@ def add_payment(invoice_id):
         )
         
         try:
+            # Validate payment amount
+            remaining = invoice.calculate_remaining_amount()
+            if payment.amount > remaining:
+                flash(f'مبلغ الدفع ({payment.amount} ج.م) أكبر من المبلغ المتبقي ({remaining} ج.م)', 'danger')
+                return redirect(url_for('operations.add_payment', invoice_id=invoice_id))
+                
             db.session.add(payment)
             db.session.add(log)
             
