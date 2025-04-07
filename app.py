@@ -70,7 +70,14 @@ if not database_url:
 # Initialize the extension
 db.init_app(app)
 
-# Initialize Flask-Mail
+# Configure and Initialize Flask-Mail
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
+
 mail = Mail()
 mail.init_app(app)
 
