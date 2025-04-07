@@ -397,23 +397,26 @@ def add_payment(invoice_id):
         )
 
         try:
-            # Get and validate the submitted amount
+            # Get and validate the submitted amount with proper decimal handling
             submitted_amount = round(float(form.amount.data), 2)
+            
+            # Basic validation
             if submitted_amount <= 0:
                 flash('مبلغ الدفع يجب أن يكون أكبر من 0', 'danger')
                 return redirect(url_for('operations.add_payment', invoice_id=invoice_id))
 
-            # Calculate remaining amount with proper rounding
-            remaining = round(invoice.calculate_remaining_amount(), 2)
+            # Get current remaining amount
+            remaining = invoice.calculate_remaining_amount()
             
-            # Validate against remaining amount with a small tolerance for floating point
-            if submitted_amount > remaining + 0.01:  # Add small tolerance
+            # Strict validation against remaining amount
+            if submitted_amount > remaining:
                 flash(f'مبلغ الدفع ({submitted_amount:.2f} ج.م) يتجاوز المبلغ المتبقي ({remaining:.2f} ج.م)', 'danger')
                 return redirect(url_for('operations.add_payment', invoice_id=invoice_id))
 
-            # Set the payment amount
+            # Set the validated payment amount
             payment.amount = submitted_amount
-
+            
+            # Add payment and log
             db.session.add(payment)
             db.session.add(log)
             

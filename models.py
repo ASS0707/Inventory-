@@ -145,13 +145,15 @@ class Invoice(db.Model):
         from sqlalchemy import func
         paid = db.session.query(func.sum(Payment.amount)) \
             .filter(Payment.invoice_id == self.id) \
-            .scalar() or 0
-        return round(float(paid), 2)
+            .scalar()
+        return round(float(paid if paid is not None else 0), 2)
 
     def calculate_remaining_amount(self):
         """Calculate the remaining amount to be paid"""
+        total = round(float(self.total_amount), 2)
         paid = self.calculate_paid_amount()
-        return round(float(self.total_amount - paid), 2)
+        remaining = total - paid
+        return max(0, round(remaining, 2))  # Ensure we never return negative
 
     def update_status(self):
         """Update the status based on payments"""
