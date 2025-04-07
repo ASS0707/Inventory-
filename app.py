@@ -127,24 +127,45 @@ def index():
 @app.route('/robots.txt')
 def robots():
     """Serve robots.txt file"""
-    from flask import send_from_directory
-    return send_from_directory(app.static_folder, 'robots.txt')
+    from flask import send_from_directory, send_file
+    # First try to serve from root, then fall back to static folder
+    try:
+        return send_file('robots.txt')
+    except:
+        return send_from_directory(app.static_folder, 'robots.txt')
 
 
 # Serve sitemap.xml
 @app.route('/sitemap.xml')
 def sitemap():
     """Serve sitemap.xml file"""
-    from flask import send_from_directory
-    return send_from_directory(app.static_folder, 'sitemap.xml')
+    from flask import send_from_directory, send_file
+    # First try to serve from root, then fall back to static folder
+    try:
+        return send_file('sitemap.xml')
+    except:
+        return send_from_directory(app.static_folder, 'sitemap.xml')
+
+
+# Serve favicon.svg
+@app.route('/favicon.svg')
+def favicon():
+    """Serve favicon.svg file"""
+    from flask import send_from_directory, send_file
+    # First try to serve from root, then fall back to static folder
+    try:
+        return send_file('favicon.svg')
+    except:
+        return send_from_directory(app.static_folder, 'favicon.svg')
 
 
 # Serve static index.html file for web servers that look for index.html
 @app.route('/index.html')
 def static_index():
     """Serve the static index.html file"""
-    from flask import send_from_directory
-    return send_from_directory(app.static_folder, 'index.html')
+    from flask import send_from_directory, send_file
+    # Return the root index.html file
+    return send_file('index.html')
 
 
 # Direct index page for visitors accessing /index directly
@@ -167,12 +188,20 @@ def index_page():
 @app.errorhandler(404)
 def page_not_found(e):
     """Handle 404 errors"""
-    from flask import render_template
-    return render_template('errors/404.html'), 404
+    from flask import render_template, send_file
+    # Try to use Flask template first, fall back to static file
+    try:
+        return render_template('errors/404.html'), 404
+    except:
+        return send_file('404.html'), 404
 
 
 @app.errorhandler(500)
 def server_error(e):
     """Handle 500 errors"""
-    from flask import render_template
-    return render_template('errors/500.html'), 500
+    from flask import render_template, send_file
+    # Try to use Flask template first, fall back to static file
+    try:
+        return render_template('errors/500.html'), 500
+    except:
+        return send_file('500.html'), 500
