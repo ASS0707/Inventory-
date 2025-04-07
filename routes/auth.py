@@ -4,9 +4,10 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime, timedelta
 import ipaddress
 
-from app import db
+from app import db, mail
 from models import User, LoginLog
 from forms.auth import LoginForm, ChangePasswordForm
+from flask_mail import Message
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -96,9 +97,17 @@ def reset_password():
             user.reset_token_expiry = datetime.utcnow() + timedelta(hours=24)
             db.session.commit()
             
-            # Here you would typically send an email with reset link
-            # For demo, we'll just show the token
-            flash(f'رمز إعادة تعيين كلمة المرور: {reset_token}', 'info')
+            # Send reset email
+            reset_url = url_for('auth.reset_password_confirm', token=reset_token, _external=True)
+            msg = Message('إعادة تعيين كلمة المرور',
+                        recipients=[email])
+            msg.body = f'''لإعادة تعيين كلمة المرور الخاصة بك، يرجى النقر على الرابط التالي:
+{reset_url}
+
+إذا لم تطلب إعادة تعيين كلمة المرور، يرجى تجاهل هذا البريد الإلكتروني.
+'''
+            mail.send(msg)
+            flash('تم إرسال تعليمات إعادة تعيين كلمة المرور إلى بريدك الإلكتروني', 'info')
             
         flash('إذا كان البريد الإلكتروني موجود، سيتم إرسال تعليمات إعادة تعيين كلمة المرور', 'info')
         return redirect(url_for('auth.login'))

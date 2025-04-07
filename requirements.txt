@@ -15,3 +15,5 @@ weasyprint
 python-dotenv
 python-dotenv>=0.21.0
 weasyprint>=54.0
+flask-mail
+flask-mail

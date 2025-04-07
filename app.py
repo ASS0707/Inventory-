@@ -6,11 +6,10 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_login import LoginManager
-
+from flask_mail import Mail
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
-
 
 class Base(DeclarativeBase):
     pass
@@ -57,7 +56,7 @@ if not database_url:
     pg_password = os.environ.get("PGPASSWORD")
     pg_database = os.environ.get("PGDATABASE")
     pg_port = os.environ.get("PGPORT")
-    
+
     if all([pg_host, pg_user, pg_password, pg_database, pg_port]):
         # Construct URI from individual components
         constructed_uri = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_database}"
@@ -70,6 +69,11 @@ if not database_url:
 
 # Initialize the extension
 db.init_app(app)
+
+# Initialize Flask-Mail
+mail = Mail()
+mail.init_app(app)
+
 
 # Setup Login Manager
 login_manager = LoginManager()
@@ -101,14 +105,14 @@ app.register_blueprint(admin_bp)
 with app.app_context():
     # Import models
     import models
-    
+
     # Create database tables
     db.create_all()
-    
+
     # Create admin user if it doesn't exist
     from models import User
     from werkzeug.security import generate_password_hash
-    
+
     admin = User.query.filter_by(username='admin').first()
     if not admin:
         admin = User(
@@ -153,7 +157,7 @@ def index():
     """Redirect to dashboard or login page"""
     from flask import redirect, url_for
     from flask_login import current_user
-    
+
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.index'))
     else:
