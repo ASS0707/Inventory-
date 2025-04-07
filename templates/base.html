@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}نظام إدارة مبيعات الملابس{% endblock %}</title>
+    
+    <!-- Bootstrap RTL CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/rtl.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dark-mode.css') }}">
+    
+    {% block styles %}{% endblock %}
+</head>
+<body class="dark-mode">
+    <!-- Mobile Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top d-lg-none">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('dashboard.index') }}">
+                <i class="fas fa-tshirt me-2"></i>
+                <span>نظام مبيعات الملابس</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMobile" aria-controls="navbarMobile" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarMobile">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == url_for('dashboard.index') %}active{% endif %}" href="{{ url_for('dashboard.index') }}">
+                            <i class="fas fa-tachometer-alt me-1"></i> لوحة القيادة
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path.startswith('/inventory') %}active{% endif %}" href="{{ url_for('inventory.index') }}">
+                            <i class="fas fa-boxes me-1"></i> المخزون
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path.startswith('/clients') %}active{% endif %}" href="{{ url_for('clients.index') }}">
+                            <i class="fas fa-users me-1"></i> العملاء
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path.startswith('/suppliers') %}active{% endif %}" href="{{ url_for('suppliers.index') }}">
+                            <i class="fas fa-truck me-1"></i> الموردين
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path.startswith('/operations') %}active{% endif %}" href="{{ url_for('operations.index') }}">
+                            <i class="fas fa-file-invoice me-1"></i> العمليات
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path.startswith('/reports') %}active{% endif %}" href="{{ url_for('reports.index') }}">
+                            <i class="fas fa-chart-bar me-1"></i> التقارير
+                        </a>
+                    </li>
+                    {% if current_user.role == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path.startswith('/admin') %}active{% endif %}" href="{{ url_for('admin.users') }}">
+                            <i class="fas fa-user-shield me-1"></i> المستخدمين
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.change_password') }}">
+                            <i class="fas fa-key me-1"></i> تغيير كلمة المرور
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                            <i class="fas fa-sign-out-alt me-1"></i> تسجيل الخروج
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="d-flex">
+        <!-- Sidebar (desktop) -->
+        <div class="sidebar d-none d-lg-block">
+            <div class="sidebar-header">
+                <a href="{{ url_for('dashboard.index') }}" class="sidebar-brand d-flex align-items-center">
+                    <i class="fas fa-tshirt me-2"></i>
+                    <span>نظام مبيعات الملابس</span>
+                </a>
+            </div>
+            
+            <ul class="sidebar-nav nav flex-column">
+                <li class="nav-item">
+                    <a href="{{ url_for('dashboard.index') }}" class="nav-link {% if request.path == url_for('dashboard.index') %}active{% endif %}">
+                        <i class="fas fa-tachometer-alt"></i> لوحة القيادة
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('inventory.index') }}" class="nav-link {% if request.path.startswith('/inventory') %}active{% endif %}">
+                        <i class="fas fa-boxes"></i> المخزون
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('clients.index') }}" class="nav-link {% if request.path.startswith('/clients') %}active{% endif %}">
+                        <i class="fas fa-users"></i> العملاء
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('suppliers.index') }}" class="nav-link {% if request.path.startswith('/suppliers') %}active{% endif %}">
+                        <i class="fas fa-truck"></i> الموردين
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('operations.index') }}" class="nav-link {% if request.path.startswith('/operations') %}active{% endif %}">
+                        <i class="fas fa-file-invoice"></i> العمليات
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('reports.index') }}" class="nav-link {% if request.path.startswith('/reports') %}active{% endif %}">
+                        <i class="fas fa-chart-bar"></i> التقارير
+                    </a>
+                </li>
+                {% if current_user.role == 'admin' %}
+                <li class="nav-item">
+                    <a href="{{ url_for('admin.users') }}" class="nav-link {% if request.path.startswith('/admin') %}active{% endif %}">
+                        <i class="fas fa-user-shield"></i> المستخدمين
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-circle me-2 fs-4"></i>
+                        <span>{{ current_user.username }}</span>
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="{{ url_for('auth.change_password') }}"><i class="fas fa-key me-2"></i> تغيير كلمة المرور</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt me-2"></i> تسجيل الخروج</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="container-fluid">
+                <div class="row py-4">
+                    <div class="col-md-6">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                {% block breadcrumb %}
+                                <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">الرئيسية</a></li>
+                                {% endblock %}
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <div class="d-flex justify-content-md-end">
+                            <div class="me-3">
+                                <button class="btn btn-sm" id="toggleDarkMode">
+                                    <i class="fas fa-moon"></i>
+                                </button>
+                            </div>
+                            <div>
+                                <span class="text-muted">{{ current_user.email }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <!-- Page Content -->
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Dark Mode Toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const darkModeToggle = document.getElementById('toggleDarkMode');
+            const body = document.body;
+            
+            // Check for saved dark mode preference
+            const isDarkMode = localStorage.getItem('darkMode') === 'enabled';
+            
+            // Apply initial dark mode setting
+            if (isDarkMode) {
+                body.classList.add('dark-mode');
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            } else {
+                body.classList.remove('dark-mode');
+                darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            }
+            
+            // Handle toggle click
+            darkModeToggle.addEventListener('click', function() {
+                if (body.classList.contains('dark-mode')) {
+                    body.classList.remove('dark-mode');
+                    localStorage.setItem('darkMode', 'disabled');
+                    darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                } else {
+                    body.classList.add('dark-mode');
+                    localStorage.setItem('darkMode', 'enabled');
+                    darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                }
+            });
+            
+            // Mobile sidebar toggle
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    document.querySelector('.sidebar').classList.toggle('active');
+                    document.querySelector('.main-content').classList.toggle('active');
+                });
+            }
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
