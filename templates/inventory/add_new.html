@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}إضافة منتج جديد - نظام إدارة مبيعات الملابس{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('inventory.index') }}">المخزون</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">إضافة منتج جديد</li>
+                </ol>
+            </nav>
+            <h1 class="display-5 mb-4"><i class="fas fa-plus-circle me-2"></i>إضافة منتج جديد</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card border-0 shadow">
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('inventory.add_new_product') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">اسم المنتج <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" placeholder="أدخل اسم المنتج" required>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="color" class="form-label">اللون <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="color" name="color" placeholder="أدخل اللون" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="material" class="form-label">المادة <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="material" name="material" placeholder="أدخل المادة" required>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="quantity" class="form-label">الكمية <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" placeholder="أدخل الكمية" min="0" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="type" class="form-label">النوع <span class="text-danger">*</span></label>
+                                <select class="form-select" id="type" name="type" required>
+                                    <option value="Plain">عادي</option>
+                                    <option value="Printed">مطبوع</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="finishing_cost" class="form-label">تكلفة التشطيب <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" class="form-control" id="finishing_cost" name="finishing_cost" placeholder="تكلفة التشطيب" min="0" required>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="printing_cost" class="form-label">تكلفة الطباعة</label>
+                                <input type="number" step="0.01" class="form-control" id="printing_cost" name="printing_cost" placeholder="تكلفة الطباعة" min="0" value="0">
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{{ url_for('inventory.index') }}" class="btn btn-light me-md-2">إلغاء</a>
+                            <button type="submit" class="btn btn-primary">إضافة منتج</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    // Show/hide printing cost based on type
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.getElementById('type');
+        const printingCostField = document.getElementById('printing_cost').closest('.col-md-4');
+        
+        function togglePrintingCost() {
+            if (typeSelect.value === 'Printed') {
+                printingCostField.style.display = 'block';
+            } else {
+                printingCostField.style.display = 'none';
+            }
+        }
+        
+        // Initial state
+        togglePrintingCost();
+        
+        // On change
+        typeSelect.addEventListener('change', togglePrintingCost);
+    });
+</script>
+{% endblock %}
+{% endblock %}

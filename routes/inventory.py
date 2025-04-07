@@ -35,7 +35,84 @@ def index():
     # Execute query with pagination
     products = query.order_by(desc(Product.updated_at)).paginate(page=page, per_page=per_page)
     
-    return render_template('inventory/index.html', products=products)
+    return render_template('inventory/index_new.html', products=products)
+
+@inventory_bp.route('/add-new-product', methods=['GET', 'POST'])
+@login_required
+def add_new_product():
+    app.logger.debug(f"Method: {request.method}")
+    
+    if request.method == 'POST':
+        app.logger.debug(f"Form data: {request.form}")
+        
+        # Get form data
+        name = request.form.get('name')
+        color = request.form.get('color')
+        material = request.form.get('material')
+        quantity = int(request.form.get('quantity', 0))
+        product_type = request.form.get('type')
+        finishing_cost = float(request.form.get('finishing_cost', 0))
+        printing_cost = float(request.form.get('printing_cost', 0)) if product_type == 'Printed' else 0
+        
+        app.logger.debug(f"Parsed data: {name}, {color}, {material}, {quantity}, {product_type}, {finishing_cost}, {printing_cost}")
+        
+        # Check if product with same name, color, and material exists
+        existing_product = Product.query.filter_by(
+            name=name,
+            color=color,
+            material=material,
+            type=product_type
+        ).first()
+        
+        if existing_product:
+            # Update existing product
+            existing_product.quantity += quantity
+            existing_product.finishing_cost = finishing_cost
+            
+            if product_type == 'Printed':
+                existing_product.printing_cost = printing_cost
+            
+            # Log the update
+            log = SystemLog(
+                action='product_update',
+                details=f'تحديث المنتج: {existing_product.name} ({existing_product.color})',
+                user_id=current_user.id
+            )
+            
+            db.session.add(log)
+            db.session.commit()
+            
+            flash(f'تم تحديث المنتج {existing_product.name} بنجاح', 'success')
+            app.logger.debug(f"Updated product {existing_product.name}")
+        else:
+            # Create new product
+            product = Product(
+                name=name,
+                color=color,
+                material=material,
+                quantity=quantity,
+                type=product_type,
+                finishing_cost=finishing_cost,
+                printing_cost=printing_cost
+            )
+            
+            # Log the creation
+            log = SystemLog(
+                action='product_create',
+                details=f'إنشاء منتج جديد: {product.name} ({product.color})',
+                user_id=current_user.id
+            )
+            
+            db.session.add(product)
+            db.session.add(log)
+            db.session.commit()
+            
+            flash(f'تم إضافة المنتج {product.name} بنجاح', 'success')
+            app.logger.debug(f"Added new product {product.name}")
+        
+        return redirect(url_for('inventory.index'))
+    
+    return render_template('inventory/add_new.html')
 
 
 @inventory_bp.route('/add', methods=['GET', 'POST'])
