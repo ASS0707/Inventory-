@@ -146,12 +146,12 @@ class Invoice(db.Model):
         paid = db.session.query(func.sum(Payment.amount)) \
             .filter(Payment.invoice_id == self.id) \
             .scalar() or 0
-        return paid
+        return round(float(paid), 2)
 
     def calculate_remaining_amount(self):
         """Calculate the remaining amount to be paid"""
         paid = self.calculate_paid_amount()
-        return self.total_amount - paid
+        return round(float(self.total_amount - paid), 2)
 
     def update_status(self):
         """Update the status based on payments"""
