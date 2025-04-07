@@ -82,3 +82,45 @@ def change_password():
             flash('كلمة المرور الحالية غير صحيحة', 'danger')
     
     return render_template('change_password.html', form=form)
+
+@auth_bp.route('/reset-password', methods=['GET', 'POST'])
+def reset_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        user = User.query.filter_by(email=email).first()
+        
+        if user:
+            # Generate password reset token
+            reset_token = generate_password_hash(str(datetime.utcnow()))[:32]
+            user.reset_token = reset_token
+            user.reset_token_expiry = datetime.utcnow() + timedelta(hours=24)
+            db.session.commit()
+            
+            # Here you would typically send an email with reset link
+            # For demo, we'll just show the token
+            flash(f'رمز إعادة تعيين كلمة المرور: {reset_token}', 'info')
+            
+        flash('إذا كان البريد الإلكتروني موجود، سيتم إرسال تعليمات إعادة تعيين كلمة المرور', 'info')
+        return redirect(url_for('auth.login'))
+    
+    return render_template('reset_password.html')
+
+@auth_bp.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password_confirm(token):
+    user = User.query.filter_by(reset_token=token).first()
+    
+    if not user or user.reset_token_expiry < datetime.utcnow():
+        flash('رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية', 'danger')
+        return redirect(url_for('auth.login'))
+    
+    if request.method == 'POST':
+        password = request.form.get('password')
+        user.password_hash = generate_password_hash(password)
+        user.reset_token = None
+        user.reset_token_expiry = None
+        db.session.commit()
+        
+        flash('تم تغيير كلمة المرور بنجاح', 'success')
+        return redirect(url_for('auth.login'))
+    
+    return render_template('reset_password_confirm.html')
