@@ -27,7 +27,7 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="name" class="form-label">اسم المنتج <span class="text-danger">*</span></label>
-                                {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else ""), placeholder="أدخل اسم المنتج") }}
+                                {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else ""), placeholder="أدخل اسم المنتج", id="name") }}
                                 {% if form.name.errors %}
                                     <div class="invalid-feedback">
                                         {% for error in form.name.errors %}
@@ -39,7 +39,7 @@
                             
                             <div class="col-md-6">
                                 <label for="color" class="form-label">اللون <span class="text-danger">*</span></label>
-                                {{ form.color(class="form-control" + (" is-invalid" if form.color.errors else ""), placeholder="أدخل اللون") }}
+                                {{ form.color(class="form-control" + (" is-invalid" if form.color.errors else ""), placeholder="أدخل اللون", id="color") }}
                                 {% if form.color.errors %}
                                     <div class="invalid-feedback">
                                         {% for error in form.color.errors %}
@@ -53,7 +53,7 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="material" class="form-label">المادة <span class="text-danger">*</span></label>
-                                {{ form.material(class="form-control" + (" is-invalid" if form.material.errors else ""), placeholder="أدخل المادة") }}
+                                {{ form.material(class="form-control" + (" is-invalid" if form.material.errors else ""), placeholder="أدخل المادة", id="material") }}
                                 {% if form.material.errors %}
                                     <div class="invalid-feedback">
                                         {% for error in form.material.errors %}
@@ -65,7 +65,7 @@
                             
                             <div class="col-md-6">
                                 <label for="quantity" class="form-label">الكمية <span class="text-danger">*</span></label>
-                                {{ form.quantity(class="form-control" + (" is-invalid" if form.quantity.errors else ""), placeholder="أدخل الكمية") }}
+                                {{ form.quantity(class="form-control" + (" is-invalid" if form.quantity.errors else ""), placeholder="أدخل الكمية", id="quantity") }}
                                 {% if form.quantity.errors %}
                                     <div class="invalid-feedback">
                                         {% for error in form.quantity.errors %}
@@ -79,7 +79,7 @@
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <label for="type" class="form-label">النوع <span class="text-danger">*</span></label>
-                                {{ form.type(class="form-select" + (" is-invalid" if form.type.errors else "")) }}
+                                {{ form.type(class="form-select" + (" is-invalid" if form.type.errors else ""), id="type") }}
                                 {% if form.type.errors %}
                                     <div class="invalid-feedback">
                                         {% for error in form.type.errors %}
@@ -91,7 +91,7 @@
                             
                             <div class="col-md-4">
                                 <label for="finishing_cost" class="form-label">تكلفة التشطيب <span class="text-danger">*</span></label>
-                                {{ form.finishing_cost(class="form-control" + (" is-invalid" if form.finishing_cost.errors else ""), placeholder="تكلفة التشطيب") }}
+                                {{ form.finishing_cost(class="form-control" + (" is-invalid" if form.finishing_cost.errors else ""), placeholder="تكلفة التشطيب", id="finishing_cost") }}
                                 {% if form.finishing_cost.errors %}
                                     <div class="invalid-feedback">
                                         {% for error in form.finishing_cost.errors %}
@@ -116,7 +116,7 @@
 
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                             <a href="{{ url_for('inventory.index') }}" class="btn btn-light me-md-2">إلغاء</a>
-                            {{ form.submit(class="btn btn-primary") }}
+                            <button type="submit" class="btn btn-primary">إضافة منتج</button>
                         </div>
                     </form>
                 </div>
