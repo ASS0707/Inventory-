@@ -24,12 +24,23 @@ app.secret_key = os.environ.get("SESSION_SECRET", "devkey-changeme-in-production
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Configure the database
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+database_url = os.environ.get("DATABASE_URL")
+# Fix Railway PostgreSQL connection string format if needed
+if database_url and database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# Add additional error handling
+if not database_url:
+    app.logger.error("DATABASE_URL environment variable is not set! Application may not function correctly.")
+    # Set a fallback SQLite database for development environments only
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///fallback.db"
 
 # Initialize the extension
 db.init_app(app)
