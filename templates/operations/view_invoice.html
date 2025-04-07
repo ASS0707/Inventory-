@@ -27,13 +27,15 @@
                     {% endif %}
                 </h1>
                 <div class="btn-group" role="group">
+                    {% if current_user.role == 'admin' %}
                     <a href="{{ url_for('operations.edit_invoice', invoice_id=invoice.id) }}" class="btn btn-warning">
                         <i class="fas fa-edit me-1"></i> تعديل الفاتورة
                     </a>
-                    {% if invoice.status != 'paid' and current_user.role == 'admin' %}
+                    {% if invoice.status != 'paid' %}
                     <a href="{{ url_for('operations.add_payment', invoice_id=invoice.id) }}" class="btn btn-success">
                         <i class="fas fa-money-bill-wave me-1"></i> إضافة دفعة
                     </a>
+                    {% endif %}
                     {% endif %}
                     <button type="button" class="btn btn-primary" onclick="printInvoice()">
                         <i class="fas fa-print me-1"></i> طباعة</button>
