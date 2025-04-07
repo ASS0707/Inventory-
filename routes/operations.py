@@ -399,9 +399,12 @@ def add_payment(invoice_id):
         try:
             # Validate payment amount
             remaining = invoice.calculate_remaining_amount()
-            if payment.amount > remaining:
-                flash(f'مبلغ الدفع ({payment.amount} ج.م) أكبر من المبلغ المتبقي ({remaining} ج.م)', 'danger')
+            if not 0 < payment.amount <= remaining:
+                flash(f'مبلغ الدفع ({payment.amount} ج.م) غير صالح. يجب أن يكون أكبر من 0 وأقل من أو يساوي المبلغ المتبقي ({remaining} ج.م)', 'danger')
                 return redirect(url_for('operations.add_payment', invoice_id=invoice_id))
+            
+            # Round amount to 2 decimal places to avoid floating point issues
+            payment.amount = round(payment.amount, 2)
                 
             db.session.add(payment)
             db.session.add(log)
@@ -409,6 +412,11 @@ def add_payment(invoice_id):
             # Update invoice status
             invoice.update_status()
             db.session.commit()
+            
+            # Verify the payment was recorded correctly
+            db.session.refresh(payment)
+            if abs(payment.amount - form.amount.data) > 0.01:
+                raise ValueError("Payment amount mismatch detected")
             
             flash(f'تم إضافة الدفعة بمبلغ {payment.amount} ج.م بنجاح', 'success')
             return redirect(url_for('operations.view_invoice', invoice_id=invoice_id))
