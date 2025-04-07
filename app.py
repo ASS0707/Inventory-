@@ -71,12 +71,15 @@ if not database_url:
 db.init_app(app)
 
 # Configure and Initialize Flask-Mail
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = ('نظام إدارة المبيعات', os.environ.get('MAIL_USERNAME'))
+app.config.update(
+    MAIL_SERVER='smtp.gmail.com',
+    MAIL_PORT=587,
+    MAIL_USE_TLS=True,
+    MAIL_USE_SSL=False,
+    MAIL_USERNAME='badr78439@gmail.com',
+    MAIL_PASSWORD='vjgq medq usrc lbvv',
+    MAIL_DEFAULT_SENDER=('نظام إدارة المبيعات', 'badr78439@gmail.com')
+)
 
 mail = Mail()
 mail.init_app(app)
